@@ -1,0 +1,12 @@
+[package]
+name = "life-tracker"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1"
+chrono = "0.4"
+crossterm = "0.27"
+directories = "5"
+ratatui = "0.26"
+rusqlite = { version = "0.31", features = ["bundled"] }
