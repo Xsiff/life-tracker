@@ -54,8 +54,10 @@ not part of any cross-module protocol, so they are defined here, not in `domain`
   uses only `Calendar` as the matrix screen; alternate modes remain a future
   extension point.
 - **`Overlay`** — optional modal state on top of the base view: `CategoryPicker`
-  (date, hour, selected category) or `NoteEditor` (target, draft text, text
+  (date, hour, selected picker row) or `NoteEditor` (target, draft text, text
   cursor). `None` means the base view has focus.
+- **`CategoryPickerSelection`** — the focused row inside `CategoryPicker`:
+  either a concrete `Category` or the trailing `AddNote` action.
 - **`NoteTarget`** — what a note edit applies to: a whole `Day` or a single
   `Hour` (date + hour).
 

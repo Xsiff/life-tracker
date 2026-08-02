@@ -33,7 +33,8 @@ copy.
   emphasized with a stronger `═` separator. The visible date/hour window is
   derived from the actual terminal size and centered around the focused cell.
 - **`category_picker.rs`** — popup list, one row per `Category` in its own color,
-  plus a final `[+] add note` action. The selected row is highlighted.
+  plus a final `[+] add note` action. The selected row is highlighted whether it
+  points at a category or the add-note row.
 - **`note_editor.rs`** — popup text box showing the `NoteEditor` draft + text
   cursor; title reflects the `NoteTarget` (day or hour).
 - **`status_bar.rs`** — shared "now" indicator + current focused slot line.
@@ -51,8 +52,9 @@ copy.
 - **Current focus.** The status bar shows the focused slot, e.g.
   `Focus: 02.08.2026 13.00 Work *`.
 - **Note markers.** A saved hour note is flagged with `*` inside the cell.
-- **Legend palette.** The matrix view ends with a boxed subtable at the
-  bottom-left showing every category number and color mapping so the numeric
+- **Legend palette.** The matrix view reserves a dedicated pane at the
+  top-right for a boxed subtable showing every category number and color mapping
+  so the numeric
   cells remain readable.
 - **Grid separators.** Column dividers are part of the view contract now; if the
   matrix is changed, keep the date column, hour columns, row lines, and stronger

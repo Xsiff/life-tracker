@@ -24,8 +24,8 @@ pub fn render(
     now: &chrono::DateTime<Local>,
 ) {
     let sections = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([Constraint::Min(0), Constraint::Length(12)])
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Min(0), Constraint::Length(24)])
         .split(area);
 
     frame.render_widget(
@@ -37,7 +37,9 @@ pub fn render(
         )),
         sections[0],
     );
-    render_legend(frame, sections[1]);
+    if sections.len() > 1 && sections[1].width >= 12 {
+        render_legend(frame, sections[1]);
+    }
 }
 
 fn build_grid_lines(
@@ -119,11 +121,14 @@ fn build_rule_line(fill: char, cross: char, hour_count: usize) -> String {
 }
 
 fn render_legend(frame: &mut Frame, area: Rect) {
-    let columns = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([Constraint::Length(24), Constraint::Min(0)])
-        .split(area);
-    let legend_area = columns[0];
+    let legend_width = area.width.min(24);
+    let legend_height = area.height.min(12);
+    let legend_area = Rect {
+        x: area.x,
+        y: area.y,
+        width: legend_width,
+        height: legend_height,
+    };
     let block = Block::default().title(" Palette ").borders(Borders::ALL);
     let inner = block.inner(legend_area);
     frame.render_widget(block, legend_area);
@@ -194,7 +199,7 @@ fn cell_content(
     };
 
     let base = match activity {
-        Some(activity) => Style::default().fg(theme::color(activity.category())),
+        Some(activity) => theme::cell_style(activity.category()),
         None => theme::empty_style(),
     };
 

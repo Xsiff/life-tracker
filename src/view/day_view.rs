@@ -61,7 +61,7 @@ fn render_hour_span(
 
     let style = match activity {
         Some(activity) => {
-            let base = Style::default().fg(theme::color(activity.category()));
+            let base = theme::cell_style(activity.category());
             if is_selected {
                 theme::selected(base)
             } else if is_now_hour {
