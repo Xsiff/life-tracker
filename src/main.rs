@@ -2,6 +2,6 @@ mod app;
 mod domain;
 mod event;
 mod storage;
-mod ui;
+mod view;
 
 fn main() {}
