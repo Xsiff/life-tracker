@@ -33,7 +33,7 @@ Types that only one module owns are documented with that module:
 
 - **`Action`** (`action.rs`) — the contract from `input` to `controller`.
   Neutral, IR-style variants that name the *keystroke*, not its effect
-  (`MoveLeft/Right/Up/Down`, `Confirm`, `Cancel`, `CycleView`, `Digit(u8)`,
+  (`MoveLeft/Right/Up/Down`, `Confirm`, `InsertNewline`, `Cancel`, `CycleView`, `Digit(u8)`,
   `Char(char)`, `Erase`, `Tick`), never raw key events. `input` produces it; the
   controller resolves each into an effect by state. See `input/AGENTS.md` for the
   key → `InputIR` → `Action` mapping and `controller/AGENTS.md` for interpretation.

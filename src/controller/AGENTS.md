@@ -78,9 +78,9 @@ Field-level bodies live in `state.rs`; this doc is the meaning + rules.
 ## State-transition rules
 
 Each rule reads as *(context) + Action → effect*. The `Action` variants are the
-neutral IR-style names (`Confirm`, `Cancel`, `Digit(n)`, `Char(c)`, moves,
-`CycleView`, `Tick`); the controller resolves each into an effect by the current
-base state + `Overlay`.
+neutral IR-style names (`Confirm`, `InsertNewline`, `Cancel`, `Digit(n)`,
+`Char(c)`, moves, `CycleView`, `Tick`); the controller resolves each into an
+effect by the current base state + `Overlay`.
 
 - **`Confirm`** — on the base matrix view, opens the `CategoryPicker` overlay
   for the focused target. If focus is on an hour cell, the picker offers
@@ -96,6 +96,9 @@ base state + `Overlay`.
   `clear_day_note` for a day focus),
   `Char('q')` quits (sets `quit = true`; `should_quit()` reports it to the main
   loop). Inside the `NoteEditor`, `Char(c)` inserts literal text.
+- **`InsertNewline`** — inside the `NoteEditor`, inserts a line break at the
+  current text cursor. This is the `Shift+Enter` path when the terminal reports
+  it distinctly, and `Ctrl+J` is the reliable fallback. Ignored elsewhere.
 - **`Erase`** — inside the `NoteEditor`, deletes the char before the text cursor;
   ignored elsewhere.
 - **`Digit(n)`** — in `CategoryPicker`, selects category `n` (digit →

@@ -59,11 +59,20 @@ fn next_action(timeout: Duration) -> anyhow::Result<Option<Action>> {
         KeyCode::Right => Some(Action::MoveRight),
         KeyCode::Up => Some(Action::MoveUp),
         KeyCode::Down => Some(Action::MoveDown),
-        KeyCode::Enter => Some(Action::Confirm),
+        KeyCode::Enter => {
+            if key.modifiers.contains(KeyModifiers::SHIFT) {
+                Some(Action::InsertNewline)
+            } else {
+                Some(Action::Confirm)
+            }
+        }
         KeyCode::Esc => Some(Action::Cancel),
         KeyCode::Tab => Some(Action::CycleView),
         KeyCode::Backspace => Some(Action::Erase),
         KeyCode::Char(c) if c.is_ascii_digit() => Some(Action::Digit(c as u8 - b'0')),
+        KeyCode::Char('j') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+            Some(Action::InsertNewline)
+        }
         KeyCode::Char(c) => {
             if key.modifiers.contains(KeyModifiers::CONTROL) {
                 None

@@ -24,9 +24,11 @@ then trivially mapped to an `Action` variant. The controller resolves what that
 physical key ──▶ InputIR ──▶ Action ──▶ (controller decides meaning by state)
 ```
 
-The IR is intentionally effect-free: `Enter` is `Confirm` (an IR), never
-"OpenCellPopup". This keeps `input` stateless and keeps one physical key from needing
-N task-specific branches.
+The IR is intentionally effect-free: plain `Enter` is `Confirm`, and a note
+newline is `InsertNewline`, never "OpenCellPopup" or "InsertLineBreakInNote".
+That newline IR is produced from `Shift+Enter` when the terminal reports it
+distinctly, and from `Ctrl+J` as the reliable fallback. This keeps `input`
+stateless and keeps one physical key from needing N task-specific branches.
 
 ### Key → IR
 
@@ -39,6 +41,8 @@ Each physical key maps to exactly one IR, regardless of state:
 | ↑                 | `Up`           |
 | ↓                 | `Down`         |
 | Enter             | `Confirm`      |
+| Shift+Enter       | `InsertNewline`|
+| Ctrl+J            | `InsertNewline`|
 | Esc               | `Cancel`       |
 | Tab               | `Cycle`        |
 | `0`–`9`           | `Digit(u8)`    |
@@ -65,6 +69,7 @@ the controller interprets the `Action` per state.
 | `Up`          | `MoveUp`             |
 | `Down`        | `MoveDown`           |
 | `Confirm`     | `Confirm`            |
+| `InsertNewline` | `InsertNewline`    |
 | `Cancel`      | `Cancel`             |
 | `Cycle`       | `CycleView`          |
 | `Digit(n)`    | `Digit(n)`           |
@@ -75,6 +80,9 @@ the controller interprets the `Action` per state.
 The controller then resolves context into an effect, e.g.:
 - `Confirm` → open the category picker for the focused matrix cell, or commit
   inside an overlay.
+- `InsertNewline` → insert a line break inside the note editor, ignored
+  elsewhere. In practice, `Ctrl+J` is the reliable terminal path even when
+  `Shift+Enter` is collapsed into plain `Enter`.
 - `Cancel` → discard inside an overlay, or be ignored / handled by shell logic
   on the base matrix.
 - `Digit(n)` → pick category `n` in the picker, ignored elsewhere.
@@ -82,9 +90,9 @@ The controller then resolves context into an effect, e.g.:
   literal text inside the note editor.
 
 This means the `Action` enum carries neutral IR-style variants (`Confirm`,
-`Cancel`, `Digit`, `Char`, `Erase`, moves, `CycleView`, `Tick`) rather than
-pre-decided effects; see `domain/action.rs` and `controller/AGENTS.md` for how
-each is interpreted.
+`InsertNewline`, `Cancel`, `Digit`, `Char`, `Erase`, moves, `CycleView`,
+`Tick`) rather than pre-decided effects; see `domain/action.rs` and
+`controller/AGENTS.md` for how each is interpreted.
 
 Because `input` holds no key→command table, the letter-command bindings (`n`/`N`
 note, `x` clear, `q` quit) are **not** documented here — they are just

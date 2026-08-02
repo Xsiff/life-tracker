@@ -39,7 +39,10 @@ copy.
   `[+] add note` action. For a day target it renders only the `[+] add note`
   row. The selected row is highlighted either way.
 - **`note_editor.rs`** — popup text box showing the `NoteEditor` draft + text
-  cursor; title reflects the `NoteTarget` (day or hour).
+  cursor; title reflects the `NoteTarget` (day or hour). The current cursor
+  position is rendered visibly as `|`. `Shift+Enter` inserts a line break when
+  the terminal reports it distinctly, `Ctrl+J` is the reliable fallback, and
+  plain `Enter` still saves.
 - **`status_bar.rs`** — shared "now" indicator + current focused slot line.
 - **`theme.rs`** — the single source of category colors:
   `fn color(category: Category) -> ratatui::style::Color`. Every screen pulls

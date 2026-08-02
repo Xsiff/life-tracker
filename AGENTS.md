@@ -20,7 +20,10 @@ one month-grouped matrix:
    `[+] add note` action that routes into the note editor for the same hour.
    If focus is on the date label instead of an hour, enter opens a day-level
    popup that exposes only `[+] add note`. Notes are edited in a text popup and
-   noted cells show `*` in the matrix. A boxed palette pane explains the
+   show a visible `|` cursor at the current text position; `Shift+Enter`
+   inserts a newline when the terminal reports it distinctly, and `Ctrl+J`
+   is supported as the reliable fallback; noted cells show `*` in the matrix.
+   A boxed palette pane explains the
    number-to-category mapping.
 
 **Domain model:**
@@ -174,7 +177,7 @@ impl Store {
 
 The **`Action`** enum is the pivot contract between `input` and `controller`. Its
 variants are neutral, IR-style names for keystrokes (`MoveLeft`, `MoveRight`,
-`MoveUp`, `MoveDown`, `Confirm`, `Cancel`, `CycleView`, `Digit(u8)`,
+`MoveUp`, `MoveDown`, `Confirm`, `InsertNewline`, `Cancel`, `CycleView`, `Digit(u8)`,
 `Char(char)`, `Erase`, `Tick`), **not** pre-decided effects — the controller
 resolves each into an effect (move the focused slot, open the category popup,
 save note, quit, …) using the current base state + `Overlay`. It is defined in

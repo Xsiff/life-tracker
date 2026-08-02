@@ -107,6 +107,12 @@ impl Controller {
                 insert_char(&mut draft, &mut cursor, c);
                 self.state.overlay = Some(Overlay::NoteEditor { target, draft, cursor });
             }
+            (Overlay::NoteEditor { target, draft, cursor }, Action::InsertNewline) => {
+                let mut draft = draft;
+                let mut cursor = cursor;
+                insert_char(&mut draft, &mut cursor, '\n');
+                self.state.overlay = Some(Overlay::NoteEditor { target, draft, cursor });
+            }
             (Overlay::NoteEditor { target, draft, cursor }, Action::Erase) => {
                 let mut draft = draft;
                 let mut cursor = cursor;
@@ -163,6 +169,7 @@ impl Controller {
             Action::Char('q') | Action::Char('Q') => self.state.quit = true,
             Action::Tick
             | Action::Cancel
+            | Action::InsertNewline
             | Action::Erase
             | Action::Digit(_)
             | Action::Char(_) => {}
@@ -386,4 +393,20 @@ fn erase_char(draft: &mut String, cursor: &mut usize) {
         .unwrap_or(0);
     draft.drain(new_cursor..*cursor);
     *cursor = new_cursor;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::insert_char;
+
+    #[test]
+    fn insert_char_supports_newlines() {
+        let mut draft = String::from("abc");
+        let mut cursor = 1usize;
+
+        insert_char(&mut draft, &mut cursor, '\n');
+
+        assert_eq!(draft, "a\nbc");
+        assert_eq!(cursor, 2);
+    }
 }

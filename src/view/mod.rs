@@ -73,8 +73,12 @@ fn render_overlay(frame: &mut Frame, state: &State, overlay: &Overlay, area: Rec
         Overlay::CategoryPicker { target, selected } => {
             category_picker::render(frame, area, target, *selected);
         }
-        Overlay::NoteEditor { target, draft, .. } => {
-            note_editor::render(frame, area, state, target, draft);
+        Overlay::NoteEditor {
+            target,
+            draft,
+            cursor,
+        } => {
+            note_editor::render(frame, area, state, target, draft, *cursor);
         }
     }
 }
@@ -399,7 +403,7 @@ mod tests {
         let output = render_to_string(&state, 58, 18);
         assert!(output.contains("Note - 13:00 Work"));
         assert!(output.contains("Sprint planning, blocked"));
-        assert!(output.contains("on API keys."));
+        assert!(output.contains("on API keys.|"));
     }
 
     #[test]

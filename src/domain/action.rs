@@ -5,6 +5,7 @@ pub enum Action {
     MoveUp,
     MoveDown,
     Confirm,
+    InsertNewline,
     Cancel,
     CycleView,
     Digit(u8),
@@ -36,6 +37,7 @@ mod tests {
         actions.insert(Action::MoveUp);
         actions.insert(Action::MoveDown);
         actions.insert(Action::Confirm);
+        actions.insert(Action::InsertNewline);
         actions.insert(Action::Cancel);
         actions.insert(Action::CycleView);
         actions.insert(Action::Digit(3));
@@ -43,7 +45,7 @@ mod tests {
         actions.insert(Action::Erase);
         actions.insert(Action::Tick);
 
-        assert_eq!(actions.len(), 11);
+        assert_eq!(actions.len(), 12);
         assert!(actions.contains(&Action::Digit(3)));
         assert!(actions.contains(&Action::Char('x')));
         assert!(!actions.contains(&Action::Digit(4)));
