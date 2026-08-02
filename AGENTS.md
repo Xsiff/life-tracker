@@ -41,9 +41,11 @@ module has one job and one public verb.
   terminal in ASCII. Stateless; never mutates `State`.
   See [`src/view/AGENTS.md`](src/view/AGENTS.md) and
   [`src/view/EXAMPLES.md`](src/view/EXAMPLES.md).
-- **`domain`** — dependency-free shared types (`Action`, `State`, `Category`,
-  `Activity`, `Day`, `Cursor`, `ViewMode`, `Overlay`, …) plus pure logic on
-  them. Every module imports `domain`; `domain` imports nothing from them.
+- **`domain`** — the protocol layer: only the cross-module contract types
+  (`Action`, `Category`, `Activity`, `Day`) plus pure logic on them. Types owned
+  by a single module (`State`, `Cursor`, `ViewMode`, `Overlay`, `NoteTarget` in
+  `controller`; colors in `view`) live with that module, not here. Every module
+  imports `domain`; `domain` imports nothing from them.
   See [`src/domain/AGENTS.md`](src/domain/AGENTS.md).
 
 **Invariants (keep these true or the design leaks):**
@@ -52,7 +54,8 @@ module has one job and one public verb.
 - `controller` is the only owner/mutator of `State` and the only holder of the
   `Store` handle.
 - `domain` stays free of `ratatui`, `crossterm`, and `rusqlite` types. `Action`
-  is expressed in domain terms (`SetCategory(Category)`), not `KeyEvent`.
+  carries neutral IR-style variants (`Confirm`, `Digit(u8)`, `Char(char)`, …),
+  not `KeyEvent`; the controller resolves each into an effect by state.
 - **Persist-then-commit:** for any action that mutates stored data, the
   controller attempts the `storage` write first and only updates in-memory
   `State` if the write succeeds; on error it keeps the old state and surfaces a
@@ -65,8 +68,8 @@ root file is the overview and the glue between them.
 
 | Module | Doc | Covers |
 |--------|-----|--------|
-| `domain` | [`src/domain/AGENTS.md`](src/domain/AGENTS.md) | meaning + rules of each data type (`Category`, `Activity`, `Day`, `State`, `Cursor`, `ViewMode`, `Overlay`, `NoteTarget`, `Action`) |
-| `input` | [`src/input/AGENTS.md`](src/input/AGENTS.md) | the full key→`Action` table and what each keypress does |
+| `domain` | [`src/domain/AGENTS.md`](src/domain/AGENTS.md) | meaning + rules of the cross-module protocol types (`Action`, `Category`, `Activity`, `Day`) |
+| `input` | [`src/input/AGENTS.md`](src/input/AGENTS.md) | the two-stage key → `InputIR` → `Action` mapping |
 | `controller` | [`src/controller/AGENTS.md`](src/controller/AGENTS.md) | update flow, the `State` it owns, and all state-transition rules |
 | `storage` | [`src/storage/AGENTS.md`](src/storage/AGENTS.md) | SQLite schema, the `Store` interface, load/validate, and I/O with the controller |
 | `view` | [`src/view/AGENTS.md`](src/view/AGENTS.md) · [`src/view/EXAMPLES.md`](src/view/EXAMPLES.md) | render flow + shared concerns; worked `State` → output examples |
@@ -89,20 +92,20 @@ life-tracker/
 ├── src/
 │   ├── main.rs              # entry: terminal setup/teardown; wires the loop
 │   │                        #   input::next_action → controller.update → view::render
-│   ├── domain/              # shared, dependency-free types + pure logic
+│   ├── domain/              # protocol types shared across modules + pure logic
 │   │   ├── AGENTS.md
 │   │   ├── mod.rs
 │   │   ├── category.rs      # Category (fixed palette, 0..9)
 │   │   ├── activity.rs      # Activity = category + optional note
 │   │   ├── calendar.rs      # Day, Week, hour-slot model + indexing, week-window math
-│   │   ├── state.rs         # State, Cursor, ViewMode, Overlay, NoteTarget
-│   │   └── action.rs        # Action (input → controller contract)
+│   │   └── action.rs        # Action (neutral IR-style input → controller contract)
 │   ├── input/               # keyboard/tick → Action
 │   │   ├── AGENTS.md
 │   │   └── mod.rs
 │   ├── controller/          # owns State; update(&mut self, Action); holds Store
 │   │   ├── AGENTS.md
-│   │   └── mod.rs
+│   │   ├── mod.rs
+│   │   └── state.rs         # State, Cursor, ViewMode, Overlay, NoteTarget
 │   ├── view/                # State → ASCII (ratatui); never mutates State
 │   │   ├── AGENTS.md
 │   │   ├── EXAMPLES.md
@@ -152,18 +155,22 @@ impl Store {
 }
 ```
 
-The **`Action`** enum is the pivot contract between `input` and `controller`; its
-variants are verb-phrased domain commands (`MoveLeft`, `OpenDay`,
-`SetCategory(Category)`, `OpenNote`, `Tick`, `Quit`, …). It is defined in
-`domain/action.rs`; the full key→`Action` mapping lives in
+The **`Action`** enum is the pivot contract between `input` and `controller`. Its
+variants are neutral, IR-style names for keystrokes (`MoveLeft`, `MoveRight`,
+`MoveUp`, `MoveDown`, `Confirm`, `Cancel`, `CycleView`, `Digit(u8)`,
+`Char(char)`, `Erase`, `Tick`), **not** pre-decided effects — the controller
+resolves each into an effect (open day, set category, save note, quit, …) using
+the current `ViewMode` + `Overlay`. It is defined in `domain/action.rs`; the full
+key → `InputIR` → `Action` mapping lives in
 [`src/input/AGENTS.md`](src/input/AGENTS.md).
 
 ## Naming conventions
 
 - **Modules / files:** `snake_case` — `day_view.rs`, `sqlite_store.rs`.
 - **Types (structs/enums/traits):** `PascalCase` — `State`, `Action`, `Category`, `Store`.
-- **Enum variants:** `PascalCase`; **verb-phrased for `Action`** (`SetCategory`,
-  `ClearHour`), **noun-phrased for data** (`Day`, `Activity`).
+- **Enum variants:** `PascalCase`; **`Action` variants name the keystroke, not
+  the effect** (`Confirm`, `Cancel`, `Digit`, `Char`), **noun-phrased for data**
+  (`Day`, `Activity`).
 - **Functions / methods / fields:** `snake_case` — `update`, `next_action`,
   `render`, `load_all`, `set_hour`, `dominant_category`.
 - **Constants:** `SCREAMING_SNAKE_CASE` — `HOURS_PER_DAY`, `WINDOW_WEEKS`.

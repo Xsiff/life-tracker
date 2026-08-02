@@ -160,7 +160,7 @@ Output:
 
 Legend: title reflects the `NoteTarget`; a day-level target renders a title like
 `Note — Sun, Aug 2 2026`. The draft is shown verbatim with the text cursor; it
-is not persisted until `NoteSave`.
+is not persisted until the save `Confirm` (Enter).
 
 ## 5. Error surfaced
 

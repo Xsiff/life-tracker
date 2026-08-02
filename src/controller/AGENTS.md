@@ -38,33 +38,71 @@ hour, no overlay, no error, `quit = false`.
 
 ## The State it owns
 
-`State` holds: the base `ViewMode`; the shared `Cursor` (date + optional hour);
-an optional `Overlay` (`CategoryPicker` or `NoteEditor`); the sparse
-`BTreeMap<NaiveDate, Day>`; `last_error`; and `quit`. Field-level meaning lives
-in `domain/AGENTS.md`; the controller is just its sole owner/mutator.
+`State` and everything nested in it are **controller-owned** types — they are
+not part of any cross-module protocol, so they are defined here, not in `domain`.
+`view` only reads them through `&State`; nothing else touches them.
+
+- **`State`** — the whole live model: the base `ViewMode`; the shared `Cursor`;
+  an optional `Overlay`; the sparse `BTreeMap<NaiveDate, Day>` of days with data
+  (`Day` itself is a `domain` protocol type — the controller/storage/view wire);
+  a `last_error`; and a `quit` flag.
+- **`Cursor`** — the shared selection: a `date` plus an optional `hour` (`Some`
+  in Day view, `None` in Calendar). Single source of selection; views never keep
+  private copies that can drift.
+- **`ViewMode`** — the base view (`Calendar`, `Day`, and future
+  `Week`/`Agenda`/`Stats`). Always set.
+- **`Overlay`** — optional modal state on top of the base view: `CategoryPicker`
+  (date, hour, selected category) or `NoteEditor` (target, draft text, text
+  cursor). `None` means the base view has focus.
+- **`NoteTarget`** — what a note edit applies to: a whole `Day` or a single
+  `Hour` (date + hour).
+
+Field-level bodies live in `state.rs`; this doc is the meaning + rules.
 
 - **Sparse map:** materialize a `Day` only when it gains an activity or a note;
   drop it when it becomes empty again. A day with only a day-level note still
   counts as data.
 - **"Now" is never stored** — the view reads the clock at render time. `Tick`
   only signals that a redraw is due; the controller stores no timestamp.
+- **`NoteEditor` draft:** the draft text + text cursor live in the overlay; the
+  draft is not written to storage until a save. `Cancel` discards it and leaves
+  the target, selection, and stored value unchanged.
+- **Routing rule:** if `overlay.is_some()`, the overlay interprets the action;
+  otherwise the active `ViewMode` does. Do not add a `Screen` enum alongside
+  `ViewMode` — that would duplicate "which view am I in" and let them drift.
 
 ## State-transition rules
 
-- `Calendar --OpenDay--> Day --OpenPicker--> CategoryPicker --Confirm--> Day`.
-  `Back`/`Cancel` (Esc) unwinds one level: overlay → base view, or Day → Calendar.
-- `OpenNote` opens `NoteEditor` for the current target (day note from Calendar,
-  hour note from Day). `NoteSave` commits the draft; `Cancel` discards it. Saving
-  an empty note clears the corresponding note.
-- Calendar navigation shows a fixed five-week window centered on the selected
-  week. `MoveLeft`/`MoveRight` shift the window (no hard date boundary);
-  `MoveUp`/`MoveDown` change weekday within the selected week.
-- `CycleView` to `Day` keeps the date and selects the current local hour when no
-  hour is set; back to `Calendar` clears the hour. `OpenDay` selects the current
-  local hour only when the date is today, else hour `0`.
-- `SetCategory` on a filled hour replaces the category and preserves its note.
-  `ClearHour` removes both the activity and its note.
-- `Quit` sets `quit = true`; `should_quit()` reports it to the main loop.
+Each rule reads as *(context) + Action → effect*. The `Action` variants are the
+neutral IR-style names (`Confirm`, `Cancel`, `Digit(n)`, `Char(c)`, moves,
+`CycleView`, `Tick`); the controller resolves each into an effect by the current
+`ViewMode` + `Overlay`.
+
+- **`Confirm`** — in Calendar, opens the selected day (`Calendar → Day`); on a
+  Day hour, opens the `CategoryPicker` overlay; in `CategoryPicker`, commits the
+  highlighted category and returns to Day; in `NoteEditor`, saves the draft.
+  Chain: `Calendar --Confirm--> Day --Confirm--> CategoryPicker --Confirm--> Day`.
+- **`Cancel`** — in an overlay, discards it and returns to the underlying view;
+  on Day (no overlay), returns to Calendar. Unwinds exactly one level.
+- **`Char(c)`** — on a base view, letters are commands: `Char('n')`/`Char('N')`
+  opens the `NoteEditor` for the current target (hour note from Day, day note
+  from Calendar); `Char('x')` on a Day hour clears it (removes both the activity
+  and its note); `Char('q')` quits (sets `quit = true`; `should_quit()` reports
+  it to the main loop). Inside the `NoteEditor`, `Char(c)` inserts literal text.
+- **`Erase`** — inside the `NoteEditor`, deletes the char before the text cursor;
+  ignored elsewhere.
+- **`Digit(n)`** — in `CategoryPicker`, selects category `n` (digit → discriminant);
+  ignored elsewhere.
+- **Moves** — Calendar shows a fixed five-week window centered on the selected
+  week: `MoveLeft`/`MoveRight` shift the window (no hard date boundary),
+  `MoveUp`/`MoveDown` change weekday within the selected week. In Day and in the
+  picker, `MoveUp`/`MoveDown` move the selection.
+- **`CycleView`** — to `Day` keeps the date and selects the current local hour
+  when no hour is set; back to `Calendar` clears the hour. (`Confirm`-opening a
+  day selects the current local hour only when the date is today, else hour `0`.)
+- **Note save semantics** — saving an empty note clears the corresponding note.
+- **`Tick`** — no state change; only bounds the input wait so the view can redraw
+  the live clock.
 
 ## Boundaries
 
