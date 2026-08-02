@@ -70,8 +70,8 @@ fn render_with_now(frame: &mut Frame, state: &State, now: &DateTime<Local>) {
 
 fn render_overlay(frame: &mut Frame, state: &State, overlay: &Overlay, area: Rect) {
     match overlay {
-        Overlay::CategoryPicker { hour, selected, .. } => {
-            category_picker::render(frame, area, *hour, *selected);
+        Overlay::CategoryPicker { target, selected } => {
+            category_picker::render(frame, area, target, *selected);
         }
         Overlay::NoteEditor { target, draft, .. } => {
             note_editor::render(frame, area, state, target, draft);
@@ -81,7 +81,10 @@ fn render_overlay(frame: &mut Frame, state: &State, overlay: &Overlay, area: Rec
 
 fn overlay_rect(area: Rect, overlay: &Overlay) -> Rect {
     let (width, height) = match overlay {
-        Overlay::CategoryPicker { .. } => (30, 15),
+        Overlay::CategoryPicker { target, .. } => match target {
+            NoteTarget::Day { .. } => (30, 6),
+            NoteTarget::Hour { .. } => (30, 15),
+        },
         Overlay::NoteEditor { .. } => (30, 8),
     };
     centered_rect(area, width.min(area.width), height.min(area.height))
@@ -205,8 +208,10 @@ fn matrix_preview_state(overlay: Option<Overlay>) -> State {
 
 fn category_picker_preview_state() -> State {
     let mut state = matrix_preview_state(Some(Overlay::CategoryPicker {
-        date: date(2026, 8, 2),
-        hour: 13,
+        target: NoteTarget::Hour {
+            date: date(2026, 8, 2),
+            hour: 13,
+        },
         selected: CategoryPickerSelection::Category(Category::Sleep),
     }));
     state.last_error = Some("Preview: Category Picker  ←/→ switch scene  q quit".to_string());
@@ -298,8 +303,10 @@ mod tests {
                 hour: Some(13),
             },
             overlay: Some(Overlay::CategoryPicker {
-                date: date(2026, 8, 2),
-                hour: 13,
+                target: NoteTarget::Hour {
+                    date: date(2026, 8, 2),
+                    hour: 13,
+                },
                 selected: CategoryPickerSelection::Category(Category::Sleep),
             }),
             days: BTreeMap::new(),
@@ -323,8 +330,10 @@ mod tests {
                 hour: Some(13),
             },
             overlay: Some(Overlay::CategoryPicker {
-                date: date(2026, 8, 2),
-                hour: 13,
+                target: NoteTarget::Hour {
+                    date: date(2026, 8, 2),
+                    hour: 13,
+                },
                 selected: CategoryPickerSelection::AddNote,
             }),
             days: BTreeMap::new(),
@@ -334,6 +343,31 @@ mod tests {
 
         let output = render_to_string(&state, 80, 24);
         assert!(output.contains("> [+] add note"));
+    }
+
+    #[test]
+    fn renders_day_category_picker_overlay() {
+        let state = State {
+            view: ViewMode::Calendar,
+            cursor: Cursor {
+                date: date(2026, 8, 2),
+                hour: None,
+            },
+            overlay: Some(Overlay::CategoryPicker {
+                target: NoteTarget::Day {
+                    date: date(2026, 8, 2),
+                },
+                selected: CategoryPickerSelection::AddNote,
+            }),
+            days: BTreeMap::new(),
+            last_error: None,
+            quit: false,
+        };
+
+        let output = render_to_string(&state, 80, 24);
+        assert!(output.contains("Day - 02.08.2026"));
+        assert!(output.contains("> [+] add note"));
+        assert!(output.contains("Focus: 02.08.2026 Day"));
     }
 
     #[test]

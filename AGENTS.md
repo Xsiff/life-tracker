@@ -9,6 +9,8 @@ one month-grouped matrix:
    sequential dates. Rows are grouped under month headers (`August 2026`,
    `September 2026`, ...). Each cell is one `(date, hour)` slot, and the table
    uses visible grid separators so dates and hours read as a real spreadsheet.
+   The left date column is also a focusable target: when focus is on the date
+   label, actions apply to the whole day rather than a single hour.
    Ordinary date rows are separated by horizontal `─` rules; month boundaries use
    stronger `═` separators. The visible viewport follows the focused cell both
    vertically and horizontally when the terminal cannot show every date/hour at
@@ -16,8 +18,10 @@ one month-grouped matrix:
 2. **Popup editing** — pressing enter on a focused cell opens a popup for that
    slot. The popup lets the user choose a category by number/color, with a final
    `[+] add note` action that routes into the note editor for the same hour.
-   Notes are edited in a text popup and noted cells show `*` in the matrix. A
-   boxed palette pane explains the number-to-category mapping.
+   If focus is on the date label instead of an hour, enter opens a day-level
+   popup that exposes only `[+] add note`. Notes are edited in a text popup and
+   noted cells show `*` in the matrix. A boxed palette pane explains the
+   number-to-category mapping.
 
 **Domain model:**
 - **Category** — a fixed set of 10 activity types (Sleep, Health, Friends/Family, Romantic, Work, Waste, Travel, Hobbies/Skills, Relaxation, Other). Categories are the palette for filling hours.

@@ -47,15 +47,15 @@ not part of any cross-module protocol, so they are defined here, not in `domain`
   (`Day` itself is a `domain` protocol type — the controller/storage/view wire);
   a `last_error`; and a `quit` flag.
 - **`Cursor`** — the shared selection: a `date` plus an optional `hour`.
-  In the new matrix UI the meaningful focus is the `(date, hour)` slot, so the
-  hour is normally present even in the base calendar/matrix view. Single source
-  of selection; views never keep private copies that can drift.
+  `hour = Some(h)` means an hour cell is focused; `hour = None` means the focus
+  is on the date column for that row and actions apply to the whole day. Single
+  source of selection; views never keep private copies that can drift.
 - **`ViewMode`** — the base presentation mode. The active frontend currently
   uses only `Calendar`, which is the matrix screen. Keep it as a single source
   of base-screen identity even while only one mode is live.
 - **`Overlay`** — optional modal state on top of the base view: `CategoryPicker`
-  (date, hour, selected picker row) or `NoteEditor` (target, draft text, text
-  cursor). `None` means the base view has focus.
+  (a `NoteTarget` plus the selected picker row) or `NoteEditor` (target, draft
+  text, text cursor). `None` means the base view has focus.
 - **`CategoryPickerSelection`** — the focused row inside `CategoryPicker`:
   either a concrete `Category` or the trailing `AddNote` action.
 - **`NoteTarget`** — what a note edit applies to: a whole `Day` or a single
@@ -83,14 +83,17 @@ neutral IR-style names (`Confirm`, `Cancel`, `Digit(n)`, `Char(c)`, moves,
 base state + `Overlay`.
 
 - **`Confirm`** — on the base matrix view, opens the `CategoryPicker` overlay
-  for the focused `(date, hour)` slot; in `CategoryPicker`, commits the
-  highlighted category, or if the selected row is `AddNote`, opens the hour note
-  editor for that same slot; in `NoteEditor`, saves the draft.
+  for the focused target. If focus is on an hour cell, the picker offers
+  categories plus `AddNote`; if focus is on the date column, the picker exposes
+  only `AddNote`. In `CategoryPicker`, confirming a category saves that hour
+  activity; confirming `AddNote` opens the note editor for the same target. In
+  `NoteEditor`, `Confirm` saves the draft.
 - **`Cancel`** — in an overlay, discards it and returns to the underlying view.
   On the base view it is typically ignored or mapped to quit/back by the shell.
 - **`Char(c)`** — on a base view, letters are commands:
-  `Char('n')`/`Char('N')` opens the `NoteEditor` for the focused hour slot,
-  `Char('x')` clears the focused slot (activity plus note),
+  `Char('n')`/`Char('N')` opens the `NoteEditor` for the focused target,
+  `Char('x')` clears the focused target (`clear_hour` for an hour cell,
+  `clear_day_note` for a day focus),
   `Char('q')` quits (sets `quit = true`; `should_quit()` reports it to the main
   loop). Inside the `NoteEditor`, `Char(c)` inserts literal text.
 - **`Erase`** — inside the `NoteEditor`, deletes the char before the text cursor;
@@ -98,11 +101,14 @@ base state + `Overlay`.
 - **`Digit(n)`** — in `CategoryPicker`, selects category `n` (digit →
   discriminant) when `n` maps to a real category; it never targets the
   `AddNote` row. Ignored elsewhere.
-- **Moves** — in the base matrix, `MoveLeft`/`MoveRight` move across hours and
-  wrap into the previous/next date at the day edge; `MoveUp`/`MoveDown` move
-  across dates while keeping the focused hour. The visible matrix window follows
-  the focused date/hour, so moving beyond the currently visible slice scrolls
-  the viewport. In the picker, vertical moves change the selected row.
+- **Moves** — in the base matrix, `MoveLeft`/`MoveRight` move horizontally
+  across the row. `MoveLeft` from hour `00` lands on the date column for the
+  same row; `MoveRight` from the date column enters hour `00`. `MoveRight` from
+  hour `23` advances to the next date at hour `00`. `MoveUp`/`MoveDown` move
+  across dates while keeping either the focused hour or the day-column focus.
+  The visible matrix window follows the focused date/hour, so moving beyond the
+  currently visible slice scrolls the viewport. In the picker, vertical moves
+  change the selected row.
 - **`CycleView`** — currently unused by the frontend. Keep it neutral in the
   protocol, but do not rely on a second base screen existing.
 - **Note save semantics** — saving an empty note clears the corresponding note.

@@ -30,8 +30,7 @@ pub enum CategoryPickerSelection {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Overlay {
     CategoryPicker {
-        date: NaiveDate,
-        hour: u8,
+        target: NoteTarget,
         selected: CategoryPickerSelection,
     },
     NoteEditor {

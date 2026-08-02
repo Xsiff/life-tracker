@@ -28,13 +28,16 @@ copy.
 - **`calendar_view.rs`** — the main matrix: columns are `00.00..23.00`, rows are
   sequential dates, and month headers split the timeline into readable blocks.
   Each populated hour cell shows the category digit in its category color; noted
-  cells add `*`. The matrix uses visible vertical separators per hour column and
-  horizontal rules between rows so it reads like a table. Month boundaries are
-  emphasized with a stronger `═` separator. The visible date/hour window is
-  derived from the actual terminal size and centered around the focused cell.
-- **`category_picker.rs`** — popup list, one row per `Category` in its own color,
-  plus a final `[+] add note` action. The selected row is highlighted whether it
-  points at a category or the add-note row.
+  cells add `*`. The date column is focusable and represents whole-day actions
+  when `cursor.hour` is `None`. The matrix uses visible vertical separators per
+  hour column and horizontal rules between rows so it reads like a table. Month
+  boundaries are emphasized with a stronger `═` separator. The visible
+  date/hour window is derived from the actual terminal size and centered around
+  the focused cell.
+- **`category_picker.rs`** — popup list driven by `NoteTarget`. For an hour
+  target it shows one row per `Category` in its own color plus a final
+  `[+] add note` action. For a day target it renders only the `[+] add note`
+  row. The selected row is highlighted either way.
 - **`note_editor.rs`** — popup text box showing the `NoteEditor` draft + text
   cursor; title reflects the `NoteTarget` (day or hour).
 - **`status_bar.rs`** — shared "now" indicator + current focused slot line.
@@ -50,7 +53,7 @@ copy.
   color. The current hour is compared only against the local date; the model
   always exposes exactly 24 slots (`00`–`23`) even across DST.
 - **Current focus.** The status bar shows the focused slot, e.g.
-  `Focus: 02.08.2026 13.00 Work *`.
+  `Focus: 02.08.2026 13.00 Work *` or `Focus: 02.08.2026 Day *`.
 - **Note markers.** A saved hour note is flagged with `*` inside the cell.
 - **Legend palette.** The matrix view reserves a dedicated right-side pane for a
   boxed subtable showing every category number and color mapping so the numeric

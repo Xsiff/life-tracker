@@ -2,7 +2,7 @@ mod state;
 
 use std::collections::BTreeMap;
 
-use chrono::{Local, NaiveDate, Timelike};
+use chrono::{Local, NaiveDate};
 
 use crate::{
     domain::{Action, Activity, Category, Day},
@@ -55,74 +55,51 @@ impl Controller {
         };
 
         match (overlay, action) {
-            (Overlay::CategoryPicker { date, hour, selected }, Action::MoveUp) => {
-                let selected = match selected {
-                    CategoryPickerSelection::Category(category) => {
-                        CategoryPickerSelection::Category(prev_category(category))
-                    }
-                    CategoryPickerSelection::AddNote => CategoryPickerSelection::AddNote,
-                };
-                self.state.overlay = Some(Overlay::CategoryPicker {
-                    date,
-                    hour,
-                    selected,
-                });
+            (Overlay::CategoryPicker { target, selected }, Action::MoveUp) => {
+                let selected = move_picker_up(&target, selected);
+                self.state.overlay = Some(Overlay::CategoryPicker { target, selected });
             }
-            (Overlay::CategoryPicker { date, hour, selected }, Action::MoveDown) => {
-                let selected = match selected {
-                    CategoryPickerSelection::Category(category) => {
-                        CategoryPickerSelection::Category(next_category(category))
-                    }
-                    CategoryPickerSelection::AddNote => CategoryPickerSelection::AddNote,
-                };
-                self.state.overlay = Some(Overlay::CategoryPicker {
-                    date,
-                    hour,
-                    selected,
-                });
+            (Overlay::CategoryPicker { target, selected }, Action::MoveDown) => {
+                let selected = move_picker_down(&target, selected);
+                self.state.overlay = Some(Overlay::CategoryPicker { target, selected });
             }
-            (Overlay::CategoryPicker { date, hour, .. }, Action::Digit(n)) => {
-                if let Some(category) = Category::from_digit(n) {
+            (Overlay::CategoryPicker { target, .. }, Action::Digit(n)) => {
+                if matches!(target, NoteTarget::Hour { .. }) {
+                    if let Some(category) = Category::from_digit(n) {
+                        self.state.overlay = Some(Overlay::CategoryPicker {
+                            target,
+                            selected: CategoryPickerSelection::Category(category),
+                        });
+                    }
+                } else {
                     self.state.overlay = Some(Overlay::CategoryPicker {
-                        date,
-                        hour,
-                        selected: CategoryPickerSelection::Category(category),
+                        target,
+                        selected: CategoryPickerSelection::AddNote,
                     });
                 }
             }
-            (Overlay::CategoryPicker { date, hour, selected }, Action::Confirm) => {
-                match selected {
-                    CategoryPickerSelection::Category(category) => {
+            (Overlay::CategoryPicker { target, selected }, Action::Confirm) => match selected {
+                CategoryPickerSelection::Category(category) => {
+                    if let NoteTarget::Hour { date, hour } = target {
                         let activity = Activity::new(category);
                         self.store.set_hour(date, hour, &activity)?;
                         ensure_day(&mut self.state.days, date).set_hour(hour, activity);
                         self.state.overlay = None;
-                        self.state.cursor.date = date;
-                        self.state.cursor.hour = Some(hour);
-                    }
-                    CategoryPickerSelection::AddNote => {
-                        self.state.overlay = Some(Overlay::NoteEditor {
-                            target: NoteTarget::Hour { date, hour },
-                            draft: self
-                                .state
-                                .activity(date, hour)
-                                .and_then(|activity| activity.note())
-                                .unwrap_or("")
-                                .to_string(),
-                            cursor: self
-                                .state
-                                .activity(date, hour)
-                                .and_then(|activity| activity.note())
-                                .unwrap_or("")
-                                .len(),
+                        self.restore_focus(target);
+                    } else {
+                        self.state.overlay = Some(Overlay::CategoryPicker {
+                            target,
+                            selected: CategoryPickerSelection::AddNote,
                         });
                     }
                 }
-            }
-            (Overlay::CategoryPicker { date, hour, .. }, Action::Cancel) => {
+                CategoryPickerSelection::AddNote => {
+                    self.open_note_editor(target);
+                }
+            },
+            (Overlay::CategoryPicker { target, .. }, Action::Cancel) => {
                 self.state.overlay = None;
-                self.state.cursor.date = date;
-                self.state.cursor.hour = Some(hour);
+                self.restore_focus(target);
             }
             (Overlay::NoteEditor { target, draft, cursor }, Action::Char(c)) => {
                 let mut draft = draft;
@@ -167,24 +144,21 @@ impl Controller {
             }
             Action::Confirm => {
                 let date = self.state.cursor.date;
-                let hour = self.state.cursor.hour.unwrap_or_else(current_hour);
-                let selected = self
-                    .state
-                    .activity(date, hour)
-                    .map(|act| CategoryPickerSelection::Category(act.category()))
-                    .unwrap_or(CategoryPickerSelection::Category(Category::Other));
+                let target = match self.state.cursor.hour {
+                    Some(hour) => NoteTarget::Hour { date, hour },
+                    None => NoteTarget::Day { date },
+                };
                 self.state.overlay = Some(Overlay::CategoryPicker {
-                    date,
-                    hour,
-                    selected,
+                    selected: picker_default_selection(&self.state, &target),
+                    target,
                 });
             }
             Action::CycleView => {}
             Action::Char('n') | Action::Char('N') => {
-                self.open_hour_note_editor();
+                self.open_note_editor_for_focus();
             }
             Action::Char('x') | Action::Char('X') => {
-                self.clear_hour(self.state.cursor.date, self.state.cursor.hour.unwrap_or(0))?;
+                self.clear_focused_value()?;
             }
             Action::Char('q') | Action::Char('Q') => self.state.quit = true,
             Action::Tick
@@ -197,10 +171,16 @@ impl Controller {
     }
 
     fn move_cursor_hour(&mut self, delta: i8) {
+        if self.state.cursor.hour.is_none() {
+            if delta > 0 {
+                self.state.cursor.hour = Some(0);
+            }
+            return;
+        }
+
         let hour = self.state.cursor.hour.unwrap_or(0) as i16 + i16::from(delta);
         if hour < 0 {
-            self.state.cursor.hour = Some(23);
-            self.state.cursor.date -= chrono::Duration::days(1);
+            self.state.cursor.hour = None;
         } else if hour > 23 {
             self.state.cursor.hour = Some(0);
             self.state.cursor.date += chrono::Duration::days(1);
@@ -209,18 +189,24 @@ impl Controller {
         }
     }
 
-    fn open_hour_note_editor(&mut self) {
-        let date = self.state.cursor.date;
-        let hour = self.state.cursor.hour.unwrap_or(0);
-        let draft = self
-            .state
-            .activity(date, hour)
-            .and_then(|activity| activity.note())
-            .unwrap_or("")
-            .to_string();
+    fn open_note_editor_for_focus(&mut self) {
+        let target = match self.state.cursor.hour {
+            Some(hour) => NoteTarget::Hour {
+                date: self.state.cursor.date,
+                hour,
+            },
+            None => NoteTarget::Day {
+                date: self.state.cursor.date,
+            },
+        };
+        self.open_note_editor(target);
+    }
+
+    fn open_note_editor(&mut self, target: NoteTarget) {
+        let draft = note_draft(&self.state, &target);
         let cursor = draft.len();
         self.state.overlay = Some(Overlay::NoteEditor {
-            target: NoteTarget::Hour { date, hour },
+            target,
             draft,
             cursor,
         });
@@ -230,7 +216,7 @@ impl Controller {
         match target {
             NoteTarget::Day { date } => {
                 self.state.cursor.date = date;
-                self.state.cursor.hour = Some(current_hour());
+                self.state.cursor.hour = None;
             }
             NoteTarget::Hour { date, hour } => {
                 self.state.cursor.date = date;
@@ -287,6 +273,22 @@ impl Controller {
         cleanup_day(&mut self.state.days, date);
         Ok(())
     }
+
+    fn clear_day_note(&mut self, date: NaiveDate) -> anyhow::Result<()> {
+        self.store.clear_day_note(date)?;
+        if let Some(day) = self.state.days.get_mut(&date) {
+            day.clear_note();
+        }
+        cleanup_day(&mut self.state.days, date);
+        Ok(())
+    }
+
+    fn clear_focused_value(&mut self) -> anyhow::Result<()> {
+        match self.state.cursor.hour {
+            Some(hour) => self.clear_hour(self.state.cursor.date, hour),
+            None => self.clear_day_note(self.state.cursor.date),
+        }
+    }
 }
 
 fn ensure_day(days: &mut BTreeMap<NaiveDate, Day>, date: NaiveDate) -> &mut Day {
@@ -304,8 +306,59 @@ fn today() -> NaiveDate {
     Local::now().date_naive()
 }
 
-fn current_hour() -> u8 {
-    Local::now().hour() as u8
+fn picker_default_selection(state: &State, target: &NoteTarget) -> CategoryPickerSelection {
+    match *target {
+        NoteTarget::Day { .. } => CategoryPickerSelection::AddNote,
+        NoteTarget::Hour { date, hour } => state
+            .activity(date, hour)
+            .map(|act| CategoryPickerSelection::Category(act.category()))
+            .unwrap_or(CategoryPickerSelection::Category(Category::Other)),
+    }
+}
+
+fn note_draft(state: &State, target: &NoteTarget) -> String {
+    match *target {
+        NoteTarget::Day { date } => state
+            .day(date)
+            .and_then(Day::note)
+            .unwrap_or("")
+            .to_string(),
+        NoteTarget::Hour { date, hour } => state
+            .activity(date, hour)
+            .and_then(|activity| activity.note())
+            .unwrap_or("")
+            .to_string(),
+    }
+}
+
+fn move_picker_up(target: &NoteTarget, selected: CategoryPickerSelection) -> CategoryPickerSelection {
+    match *target {
+        NoteTarget::Day { .. } => CategoryPickerSelection::AddNote,
+        NoteTarget::Hour { .. } => match selected {
+            CategoryPickerSelection::Category(category) => {
+                CategoryPickerSelection::Category(prev_category(category))
+            }
+            CategoryPickerSelection::AddNote => CategoryPickerSelection::Category(Category::Other),
+        },
+    }
+}
+
+fn move_picker_down(
+    target: &NoteTarget,
+    selected: CategoryPickerSelection,
+) -> CategoryPickerSelection {
+    match *target {
+        NoteTarget::Day { .. } => CategoryPickerSelection::AddNote,
+        NoteTarget::Hour { .. } => match selected {
+            CategoryPickerSelection::Category(Category::Other) => {
+                CategoryPickerSelection::AddNote
+            }
+            CategoryPickerSelection::Category(category) => {
+                CategoryPickerSelection::Category(next_category(category))
+            }
+            CategoryPickerSelection::AddNote => CategoryPickerSelection::AddNote,
+        },
+    }
 }
 
 fn prev_category(category: Category) -> Category {

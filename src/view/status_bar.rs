@@ -6,7 +6,7 @@ use ratatui::{
     Frame,
 };
 
-use crate::controller::{Overlay, State};
+use crate::controller::{NoteTarget, Overlay, State};
 
 pub fn render(frame: &mut Frame, area: Rect, state: &State, now: &DateTime<Local>) {
     let focus_or_error = state
@@ -16,7 +16,10 @@ pub fn render(frame: &mut Frame, area: Rect, state: &State, now: &DateTime<Local
         .unwrap_or_else(|| focus_text(state));
 
     let commands = match state.overlay.as_ref() {
-        Some(Overlay::CategoryPicker { .. }) => "↑↓ move  0-9 select  ⏎ confirm  Esc cancel",
+        Some(Overlay::CategoryPicker { target, .. }) => match target {
+            NoteTarget::Day { .. } => "↑↓ move  ⏎ confirm  Esc cancel",
+            NoteTarget::Hour { .. } => "↑↓ move  0-9 select  ⏎ confirm  Esc cancel",
+        },
         Some(Overlay::NoteEditor { .. }) => "type text  ⏎ save  Esc cancel  Backspace erase",
         None => "←↑↓→ move  ⏎ open  n note  x clear  q quit",
     };
@@ -36,16 +39,28 @@ pub fn render(frame: &mut Frame, area: Rect, state: &State, now: &DateTime<Local
 }
 
 fn focus_text(state: &State) -> String {
-    let hour = state.cursor.hour.unwrap_or(0);
-    match state.activity(state.cursor.date, hour) {
-        Some(activity) => {
-            let note = if activity.has_note() { " *" } else { "" };
-            format!(
-                "Focus: {} {hour:02}.00 {}{note}",
-                state.cursor.date.format("%d.%m.%Y"),
-                activity.category().label()
-            )
+    match state.cursor.hour {
+        Some(hour) => match state.activity(state.cursor.date, hour) {
+            Some(activity) => {
+                let note = if activity.has_note() { " *" } else { "" };
+                format!(
+                    "Focus: {} {hour:02}.00 {}{note}",
+                    state.cursor.date.format("%d.%m.%Y"),
+                    activity.category().label()
+                )
+            }
+            None => format!(
+                "Focus: {} {hour:02}.00 Empty",
+                state.cursor.date.format("%d.%m.%Y")
+            ),
+        },
+        None => {
+            let note = if state.day(state.cursor.date).and_then(|day| day.note()).is_some() {
+                " *"
+            } else {
+                ""
+            };
+            format!("Focus: {} Day{note}", state.cursor.date.format("%d.%m.%Y"))
         }
-        None => format!("Focus: {} {hour:02}.00 Empty", state.cursor.date.format("%d.%m.%Y")),
     }
 }

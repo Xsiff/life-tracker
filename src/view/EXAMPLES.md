@@ -74,8 +74,7 @@ State: base matrix view, plus
 
 ```rust
 overlay: Some(Overlay::CategoryPicker {
-    date: 2026-08-02,
-    hour: 13,
+    target: NoteTarget::Hour { date: 2026-08-02, hour: 13 },
     selected: CategoryPickerSelection::Category(Category::Sleep),
 })
 ```
@@ -106,7 +105,36 @@ Legend:
 - The add-note row is part of the picker selection model, so it can be focused
   and confirmed just like a category row.
 
-## 3. Note editor overlay
+## 3. Day note picker
+
+State: base matrix view, with the date column focused, plus
+
+```rust
+State {
+    cursor: Cursor { date: 2026-08-02, hour: None },
+    overlay: Some(Overlay::CategoryPicker {
+        target: NoteTarget::Day { date: 2026-08-02 },
+        selected: CategoryPickerSelection::AddNote,
+    }),
+    ..
+}
+```
+
+Output:
+
+```text
+        ┌ Day - 02.08.2026 ─────────┐
+        │ > [+] add note            │
+        │ ⏎ confirm   Esc cancel    │
+        └───────────────────────────┘
+```
+
+Legend:
+- Day focus means actions apply to the whole day, not an hour slot.
+- Pressing `Enter` on a day focus opens this picker, which intentionally exposes
+  only the add-note action.
+
+## 4. Note editor overlay
 
 State: base matrix view, plus
 
