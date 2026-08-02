@@ -84,3 +84,8 @@ This means the `Action` enum carries neutral IR-style variants (`Confirm`,
 `Cancel`, `Digit`, `Char`, `Erase`, moves, `CycleView`, `Tick`) rather than
 pre-decided effects; see `domain/action.rs` and `controller/AGENTS.md` for how
 each is interpreted.
+
+Because `input` holds no key→command table, the letter-command bindings (`n`/`N`
+note, `x` clear, `q` quit, `v` view) are **not** documented here — they are just
+`Char(c)` at this layer. Their meaning lives with the code that owns it: the
+state-transition rules in `controller/AGENTS.md`.
