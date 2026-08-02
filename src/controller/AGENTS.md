@@ -27,7 +27,7 @@ current local hour, no overlay, no error, `quit = false`.
 `update(action)` is a nearly-pure `(State, Action) -> State` transition:
 
 1. **Routing.** If `state.overlay.is_some()`, the overlay interprets the action;
-   otherwise the active `ViewMode` interprets it. The same `Action` means
+   otherwise the base matrix screen interprets it. The same `Action` means
    different things per context.
 2. **Persist-then-commit.** For any action that mutates stored data, call the
    matching `Store` method **first**. Only mutate in-memory `State` if it returns
@@ -51,8 +51,8 @@ not part of any cross-module protocol, so they are defined here, not in `domain`
   hour is normally present even in the base calendar/matrix view. Single source
   of selection; views never keep private copies that can drift.
 - **`ViewMode`** — the base presentation mode. The active frontend currently
-  uses only `Calendar` as the matrix screen; alternate modes remain a future
-  extension point.
+  uses only `Calendar`, which is the matrix screen. Keep it as a single source
+  of base-screen identity even while only one mode is live.
 - **`Overlay`** — optional modal state on top of the base view: `CategoryPicker`
   (date, hour, selected picker row) or `NoteEditor` (target, draft text, text
   cursor). `None` means the base view has focus.
@@ -80,12 +80,12 @@ Field-level bodies live in `state.rs`; this doc is the meaning + rules.
 Each rule reads as *(context) + Action → effect*. The `Action` variants are the
 neutral IR-style names (`Confirm`, `Cancel`, `Digit(n)`, `Char(c)`, moves,
 `CycleView`, `Tick`); the controller resolves each into an effect by the current
-`ViewMode` + `Overlay`.
+base state + `Overlay`.
 
 - **`Confirm`** — on the base matrix view, opens the `CategoryPicker` overlay
   for the focused `(date, hour)` slot; in `CategoryPicker`, commits the
-  highlighted category or routes to note editing; in `NoteEditor`, saves the
-  draft.
+  highlighted category, or if the selected row is `AddNote`, opens the hour note
+  editor for that same slot; in `NoteEditor`, saves the draft.
 - **`Cancel`** — in an overlay, discards it and returns to the underlying view.
   On the base view it is typically ignored or mapped to quit/back by the shell.
 - **`Char(c)`** — on a base view, letters are commands:
@@ -95,13 +95,14 @@ neutral IR-style names (`Confirm`, `Cancel`, `Digit(n)`, `Char(c)`, moves,
   loop). Inside the `NoteEditor`, `Char(c)` inserts literal text.
 - **`Erase`** — inside the `NoteEditor`, deletes the char before the text cursor;
   ignored elsewhere.
-- **`Digit(n)`** — in `CategoryPicker`, selects category `n` (digit → discriminant);
-  ignored elsewhere.
-- **Moves** — in the base matrix, `MoveLeft`/`MoveRight` move across hours
-  within the same date, `MoveUp`/`MoveDown` move across dates while keeping the
-  hour when possible. The visible matrix window follows the focused date/hour,
-  so moving beyond the currently visible slice scrolls the viewport. In the
-  picker, vertical moves change the selected row.
+- **`Digit(n)`** — in `CategoryPicker`, selects category `n` (digit →
+  discriminant) when `n` maps to a real category; it never targets the
+  `AddNote` row. Ignored elsewhere.
+- **Moves** — in the base matrix, `MoveLeft`/`MoveRight` move across hours and
+  wrap into the previous/next date at the day edge; `MoveUp`/`MoveDown` move
+  across dates while keeping the focused hour. The visible matrix window follows
+  the focused date/hour, so moving beyond the currently visible slice scrolls
+  the viewport. In the picker, vertical moves change the selected row.
 - **`CycleView`** — currently unused by the frontend. Keep it neutral in the
   protocol, but do not rely on a second base screen existing.
 - **Note save semantics** — saving an empty note clears the corresponding note.

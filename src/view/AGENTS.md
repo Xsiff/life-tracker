@@ -23,7 +23,7 @@ copy.
 
 ## Modules
 
-- **`mod.rs`** — the `render()` entry point + overlay handling + fixed preview
+- **`mod.rs`** — the `render()` entry point + overlay handling + preview
   scenes for real terminal inspection.
 - **`calendar_view.rs`** — the main matrix: columns are `00.00..23.00`, rows are
   sequential dates, and month headers split the timeline into readable blocks.
@@ -52,9 +52,8 @@ copy.
 - **Current focus.** The status bar shows the focused slot, e.g.
   `Focus: 02.08.2026 13.00 Work *`.
 - **Note markers.** A saved hour note is flagged with `*` inside the cell.
-- **Legend palette.** The matrix view reserves a dedicated pane at the
-  top-right for a boxed subtable showing every category number and color mapping
-  so the numeric
+- **Legend palette.** The matrix view reserves a dedicated right-side pane for a
+  boxed subtable showing every category number and color mapping so the numeric
   cells remain readable.
 - **Grid separators.** Column dividers are part of the view contract now; if the
   matrix is changed, keep the date column, hour columns, row lines, and stronger

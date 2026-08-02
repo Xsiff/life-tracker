@@ -15,9 +15,9 @@ one month-grouped matrix:
    once.
 2. **Popup editing** — pressing enter on a focused cell opens a popup for that
    slot. The popup lets the user choose a category by number/color, with a final
-   `[+] add note` action. Notes are edited in a text popup and noted cells show
-   `*` in the matrix. A boxed palette subtable at the top-right explains the
-   number-to-category mapping.
+   `[+] add note` action that routes into the note editor for the same hour.
+   Notes are edited in a text popup and noted cells show `*` in the matrix. A
+   boxed palette pane explains the number-to-category mapping.
 
 **Domain model:**
 - **Category** — a fixed set of 10 activity types (Sleep, Health, Friends/Family, Romantic, Work, Waste, Travel, Hobbies/Skills, Relaxation, Other). Categories are the palette for filling hours.
@@ -104,7 +104,7 @@ life-tracker/
 ├── Cargo.toml
 ├── AGENTS.md                # this overview
 ├── src/
-│   ├── main.rs              # terminal preview entry today; target app loop remains
+│   ├── main.rs              # app entry: terminal setup/teardown + main loop
 │   │                        #   input::next_action → controller.update → view::render
 │   ├── domain/              # protocol types shared across modules + pure logic
 │   │   ├── AGENTS.md
@@ -123,8 +123,8 @@ life-tracker/
 │   ├── view/                # State → ASCII (ratatui); never mutates State
 │   │   ├── AGENTS.md
 │   │   ├── EXAMPLES.md
-│   │   ├── mod.rs           # render() entry + fixed preview scenes
-│   │   ├── calendar_view.rs # month-grouped day x hour matrix + top-right boxed palette
+│   │   ├── mod.rs           # render() entry + preview scene helpers
+│   │   ├── calendar_view.rs # month-grouped day x hour matrix + palette pane
 │   │   ├── category_picker.rs # popup/list to choose a category or the add-note action
 │   │   ├── note_editor.rs   # popup text editor for day/hour notes
 │   │   ├── status_bar.rs    # "now" indicator + current focused slot line
