@@ -12,8 +12,9 @@ indicator stays live even without keypresses. It never touches `State`. No
 
 ## Two stages: key → IR → Action
 
-Because the *meaning* of a key changes with state (Enter opens a day in Calendar
-but confirms a picker in an overlay), `input` must not categorize keys by task.
+Because the *meaning* of a key changes with state (Enter opens the focused cell
+popup in the matrix but confirms a picker in an overlay), `input` must not
+categorize keys by task.
 Instead it maps each physical key to a small, stable **intermediate
 representation (IR)** — a name for the *keystroke*, not its effect. The IR is
 then trivially mapped to an `Action` variant. The controller resolves what that
@@ -24,7 +25,7 @@ physical key ──▶ InputIR ──▶ Action ──▶ (controller decides me
 ```
 
 The IR is intentionally effect-free: `Enter` is `Confirm` (an IR), never
-"OpenDay". This keeps `input` stateless and keeps one physical key from needing
+"OpenCellPopup". This keeps `input` stateless and keeps one physical key from needing
 N task-specific branches.
 
 ### Key → IR
@@ -46,7 +47,7 @@ Each physical key maps to exactly one IR, regardless of state:
 | (tick timeout)    | `Tick`         |
 
 Notes:
-- Letters that are also commands (`v`, `n`, `N`, `x`, `q`) arrive as
+- Letters that are also commands (`n`, `N`, `x`, `q`) arrive as
   `Char(c)` — `input` does not special-case them; the controller decides whether
   a `Char('q')` means quit (base view) or literal text (note editor). This is the
   whole point of the IR: no task categorization here.
@@ -72,10 +73,10 @@ the controller interprets the `Action` per state.
 | `Tick`        | `Tick`               |
 
 The controller then resolves context into an effect, e.g.:
-- `Confirm` → open the selected day in Calendar, open the category picker on a
-  Day hour, or commit inside an overlay.
-- `Cancel` → step back one level on a base view (Day → Calendar), or discard
+- `Confirm` → open the category picker for the focused matrix cell, or commit
   inside an overlay.
+- `Cancel` → discard inside an overlay, or be ignored / handled by shell logic
+  on the base matrix.
 - `Digit(n)` → pick category `n` in the picker, ignored elsewhere.
 - `Char('n')`/`Char('x')`/`Char('q')` → note / clear / quit on a base view;
   literal text inside the note editor.
@@ -86,6 +87,6 @@ pre-decided effects; see `domain/action.rs` and `controller/AGENTS.md` for how
 each is interpreted.
 
 Because `input` holds no key→command table, the letter-command bindings (`n`/`N`
-note, `x` clear, `q` quit, `v` view) are **not** documented here — they are just
+note, `x` clear, `q` quit) are **not** documented here — they are just
 `Char(c)` at this layer. Their meaning lives with the code that owns it: the
 state-transition rules in `controller/AGENTS.md`.

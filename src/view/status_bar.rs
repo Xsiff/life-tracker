@@ -6,7 +6,7 @@ use ratatui::{
     Frame,
 };
 
-use crate::controller::{Overlay, State, ViewMode};
+use crate::controller::{Overlay, State};
 
 pub fn render(frame: &mut Frame, area: Rect, state: &State, now: &DateTime<Local>) {
     let focus_or_error = state

@@ -13,11 +13,8 @@ use ratatui::{
     Frame,
 };
 
-use crate::controller::{CategoryPickerSelection, Overlay, State, ViewMode};
-use crate::{
-    controller::{Cursor, NoteTarget},
-    domain::{Activity, Category, Day},
-};
+use crate::controller::{CategoryPickerSelection, Cursor, NoteTarget, Overlay, State, ViewMode};
+use crate::domain::{Activity, Category, Day};
 
 #[derive(Debug, Clone)]
 pub struct PreviewScene {
@@ -54,9 +51,7 @@ fn render_with_now(frame: &mut Frame, state: &State, now: &DateTime<Local>) {
         now.year()
     );
 
-    let block = Block::default()
-        .title(title)
-        .borders(Borders::ALL);
+    let block = Block::default().title(title).borders(Borders::ALL);
     let area = frame.size();
     let inner = block.inner(area);
     frame.render_widget(block, area);
@@ -168,7 +163,7 @@ fn calendar_preview_state() -> State {
         view: ViewMode::Calendar,
         cursor: Cursor {
             date: date(2026, 8, 2),
-            hour: None,
+            hour: Some(13),
         },
         overlay: None,
         days,
@@ -196,7 +191,7 @@ fn matrix_preview_state(overlay: Option<Overlay>) -> State {
     days.insert(day.date(), day);
 
     State {
-        view: crate::controller::ViewMode::Calendar,
+        view: ViewMode::Calendar,
         cursor: Cursor {
             date: date(2026, 8, 2),
             hour: Some(13),
@@ -242,7 +237,10 @@ mod tests {
     use chrono::{Local, NaiveDate, TimeZone};
     use ratatui::{backend::TestBackend, Terminal};
 
-    use crate::{controller::{CategoryPickerSelection, Cursor, NoteTarget, Overlay, State, ViewMode}, domain::{Activity, Category, Day}};
+    use crate::controller::{
+        CategoryPickerSelection, Cursor, NoteTarget, Overlay, State, ViewMode,
+    };
+    use crate::domain::{Activity, Category, Day};
 
     use super::{calendar_preview_state, matrix_preview_state, render_with_now};
 
@@ -262,7 +260,7 @@ mod tests {
         days.insert(sunday.date(), sunday);
 
         let state = State {
-            view: crate::controller::ViewMode::Calendar,
+            view: ViewMode::Calendar,
             cursor: Cursor {
                 date: date(2026, 8, 2),
                 hour: Some(0),
@@ -276,7 +274,7 @@ mod tests {
         let output = render_to_string(&state, 160, 32);
         assert!(output.contains("life-tracker"));
         assert!(output.contains("00.00"));
-        assert!(output.contains("23.00"));
+        assert!(output.contains("13.00"));
         assert!(output.contains("**August 2026**"));
         assert!(output.contains("Focus: 02.08.2026 00.00 Work"));
     }
@@ -294,7 +292,7 @@ mod tests {
     #[test]
     fn renders_category_picker_overlay() {
         let state = State {
-            view: crate::controller::ViewMode::Calendar,
+            view: ViewMode::Calendar,
             cursor: Cursor {
                 date: date(2026, 8, 2),
                 hour: Some(13),
@@ -312,14 +310,14 @@ mod tests {
         let output = render_to_string(&state, 80, 24);
         assert!(output.contains("Set activity - 13.00"));
         assert!(output.contains("> 0 Sleep"));
-        assert!(output.contains("[+] add note"));
+        assert!(output.contains("  [+] add note"));
         assert!(output.contains("9 Other"));
     }
 
     #[test]
     fn renders_category_picker_add_note_selected() {
         let state = State {
-            view: crate::controller::ViewMode::Calendar,
+            view: ViewMode::Calendar,
             cursor: Cursor {
                 date: date(2026, 8, 2),
                 hour: Some(13),
@@ -346,7 +344,7 @@ mod tests {
         days.insert(day.date(), day);
 
         let state = State {
-            view: crate::controller::ViewMode::Calendar,
+            view: ViewMode::Calendar,
             cursor: Cursor {
                 date: date(2026, 8, 2),
                 hour: Some(13),
@@ -376,7 +374,7 @@ mod tests {
         let mut state = calendar_preview_state();
         state.last_error = None;
 
-        println!("{}", render_to_string(&state, 58, 12));
+        println!("{}", render_to_string(&state, 160, 24));
     }
 
     #[test]

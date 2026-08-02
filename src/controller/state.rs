@@ -7,7 +7,6 @@ use crate::domain::{Activity, Category, Day};
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ViewMode {
     Calendar,
-    Day,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

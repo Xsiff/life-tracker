@@ -17,6 +17,10 @@ pub fn color(category: Category) -> Color {
     }
 }
 
+pub fn cell_style(category: Category) -> Style {
+    Style::default().bg(color(category)).fg(Color::White)
+}
+
 pub fn empty_style() -> Style {
     Style::default().fg(Color::DarkGray)
 }

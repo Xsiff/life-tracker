@@ -46,10 +46,7 @@ impl Controller {
     }
 
     fn update_base(&mut self, action: Action) -> anyhow::Result<()> {
-        match self.state.view {
-            ViewMode::Calendar => self.update_calendar(action),
-            ViewMode::Day => self.update_day(action),
-        }
+        self.update_calendar(action)
     }
 
     fn update_overlay(&mut self, action: Action) -> anyhow::Result<()> {
@@ -94,21 +91,36 @@ impl Controller {
                 }
             }
             (Overlay::CategoryPicker { date, hour, selected }, Action::Confirm) => {
-                let CategoryPickerSelection::Category(category) = selected else {
-                    self.state.overlay = Some(Overlay::CategoryPicker {
-                        date,
-                        hour,
-                        selected,
-                    });
-                    return Ok(());
-                };
-                let activity = Activity::new(category);
-                self.store.set_hour(date, hour, &activity)?;
-                ensure_day(&mut self.state.days, date).set_hour(hour, activity);
+                match selected {
+                    CategoryPickerSelection::Category(category) => {
+                        let activity = Activity::new(category);
+                        self.store.set_hour(date, hour, &activity)?;
+                        ensure_day(&mut self.state.days, date).set_hour(hour, activity);
+                        self.state.overlay = None;
+                        self.state.cursor.date = date;
+                        self.state.cursor.hour = Some(hour);
+                    }
+                    CategoryPickerSelection::AddNote => {
+                        self.state.overlay = Some(Overlay::NoteEditor {
+                            target: NoteTarget::Hour { date, hour },
+                            draft: self
+                                .state
+                                .activity(date, hour)
+                                .and_then(|activity| activity.note())
+                                .unwrap_or("")
+                                .to_string(),
+                            cursor: self
+                                .state
+                                .activity(date, hour)
+                                .and_then(|activity| activity.note())
+                                .unwrap_or("")
+                                .len(),
+                        });
+                    }
+                }
             }
             (Overlay::CategoryPicker { date, hour, .. }, Action::Cancel) => {
                 self.state.overlay = None;
-                self.state.view = ViewMode::Day;
                 self.state.cursor.date = date;
                 self.state.cursor.hour = Some(hour);
             }
@@ -154,24 +166,26 @@ impl Controller {
                 self.state.cursor.date += chrono::Duration::days(1);
             }
             Action::Confirm => {
-                self.state.view = ViewMode::Day;
-                self.state.cursor.hour = Some(if self.state.cursor.date == today() {
-                    Local::now().hour() as u8
-                } else {
-                    0
+                let date = self.state.cursor.date;
+                let hour = self.state.cursor.hour.unwrap_or_else(current_hour);
+                let selected = self
+                    .state
+                    .activity(date, hour)
+                    .map(|act| CategoryPickerSelection::Category(act.category()))
+                    .unwrap_or(CategoryPickerSelection::Category(Category::Other));
+                self.state.overlay = Some(Overlay::CategoryPicker {
+                    date,
+                    hour,
+                    selected,
                 });
             }
-            Action::CycleView => {
-                self.state.view = ViewMode::Day;
-                if self.state.cursor.hour.is_none() {
-                    self.state.cursor.hour = Some(if self.state.cursor.date == today() {
-                        Local::now().hour() as u8
-                    } else {
-                        0
-                    });
-                }
+            Action::CycleView => {}
+            Action::Char('n') | Action::Char('N') => {
+                self.open_hour_note_editor();
             }
-            Action::Char('n') | Action::Char('N') => self.open_day_note_editor(),
+            Action::Char('x') | Action::Char('X') => {
+                self.clear_hour(self.state.cursor.date, self.state.cursor.hour.unwrap_or(0))?;
+            }
             Action::Char('q') | Action::Char('Q') => self.state.quit = true,
             Action::Tick
             | Action::Cancel
@@ -195,64 +209,6 @@ impl Controller {
         }
     }
 
-    fn update_day(&mut self, action: Action) -> anyhow::Result<()> {
-        let hour = self.state.cursor.hour.unwrap_or(0);
-        match action {
-            Action::MoveUp => {
-                self.state.cursor.date -= chrono::Duration::days(1);
-            }
-            Action::MoveDown => {
-                self.state.cursor.date += chrono::Duration::days(1);
-            }
-            Action::MoveLeft => {
-                self.move_cursor_hour(-1);
-            }
-            Action::MoveRight => {
-                self.move_cursor_hour(1);
-            }
-            Action::Confirm => {
-                let date = self.state.cursor.date;
-                let hour = self.state.cursor.hour.unwrap_or(0);
-                let selected = self
-                    .state
-                    .activity(date, hour)
-                    .map(|act| CategoryPickerSelection::Category(act.category()))
-                    .unwrap_or(CategoryPickerSelection::Category(Category::Other));
-                self.state.overlay = Some(Overlay::CategoryPicker {
-                    date,
-                    hour,
-                    selected,
-                });
-            }
-            Action::CycleView | Action::Cancel => {
-                self.state.view = ViewMode::Calendar;
-                self.state.cursor.hour = None;
-            }
-            Action::Char('n') | Action::Char('N') => self.open_hour_note_editor(),
-            Action::Char('x') | Action::Char('X') => self.clear_hour(self.state.cursor.date, hour)?,
-            Action::Char('q') | Action::Char('Q') => self.state.quit = true,
-            Action::Tick | Action::Digit(_) | Action::Char(_) | Action::Erase => {}
-        }
-        Ok(())
-    }
-
-    fn open_day_note_editor(&mut self) {
-        let date = self.state.cursor.date;
-        let draft = self
-            .state
-            .days
-            .get(&date)
-            .and_then(|day| day.note())
-            .unwrap_or("")
-            .to_string();
-        let cursor = draft.len();
-        self.state.overlay = Some(Overlay::NoteEditor {
-            target: NoteTarget::Day { date },
-            draft,
-            cursor,
-        });
-    }
-
     fn open_hour_note_editor(&mut self) {
         let date = self.state.cursor.date;
         let hour = self.state.cursor.hour.unwrap_or(0);
@@ -273,12 +229,10 @@ impl Controller {
     fn restore_focus(&mut self, target: NoteTarget) {
         match target {
             NoteTarget::Day { date } => {
-                self.state.view = ViewMode::Calendar;
                 self.state.cursor.date = date;
-                self.state.cursor.hour = None;
+                self.state.cursor.hour = Some(current_hour());
             }
             NoteTarget::Hour { date, hour } => {
-                self.state.view = ViewMode::Day;
                 self.state.cursor.date = date;
                 self.state.cursor.hour = Some(hour);
             }
@@ -348,6 +302,10 @@ fn cleanup_day(days: &mut BTreeMap<NaiveDate, Day>, date: NaiveDate) {
 
 fn today() -> NaiveDate {
     Local::now().date_naive()
+}
+
+fn current_hour() -> u8 {
+    Local::now().hour() as u8
 }
 
 fn prev_category(category: Category) -> Category {
