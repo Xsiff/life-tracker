@@ -21,7 +21,7 @@ State {
     days: {
         2026-07-31: some Travel hours,
         2026-08-01: empty,
-        2026-08-02: 00..06 Sleep, 07 Health, 08 Travel,
+        2026-08-02: day note "Daily journal", 00..06 Sleep, 07 Health, 08 Travel,
                     09..11 Work, 12 Health,
                     13 Work(note), 14 Work,
                     16 Relaxation, 17 HobbiesSkills,
@@ -47,7 +47,7 @@ Output:
 │════════════╪═════╪═════╪═════╪═════╪═════╪═════╪═════╪═════╪│6 = Travel            │         │
 │ 01.08.2026 │ ·   │ ·   │ ·   │ ·   │ ·   │ ·   │ ·   │ ·   ││7 = Hobbies/Skills    │         │
 │────────────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼│8 = Relaxation        │         │
-│ 02.08.2026 │ 4   │ 4   │ 1   │ 4*  │ 4   │ ·   │ 8   │ 7   ││9 = Other             │         │
+│ 02.08.2026*│ 4   │ 4   │ 1   │ 4*  │ 4   │ ·   │ 8   │ 7   ││9 = Other             │         │
 │────────────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼└──────────────────────┘         │
 │ 03.08.2026 │ ·   │ ·   │ ·   │ ·   │ ·   │ ·   │ ·   │ ·   │                                  │
 │────────────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼                                  │
@@ -59,7 +59,7 @@ Output:
 
 Legend:
 - Each occupied cell shows the category digit in its category color.
-- A noted cell appends `*`, e.g. `4*`.
+- A noted cell appends `*`, e.g. `4*`. A day with a day-level note shows `*` only on the date label in the left column (e.g., `02.08.2026*│`), not on hour cells.
 - The focused cell gets the selection highlight.
 - The real current `(date, hour)` cell gets the "now" highlight when it is not
   also the focused cell.

@@ -91,15 +91,23 @@ fn build_day_line(
     now: &chrono::DateTime<Local>,
     hours: &[u8],
 ) -> Line<'static> {
-        let mut spans = vec![Span::styled(
-            format!("{:<DATE_WIDTH$}│", date.format("%d.%m.%Y")),
-            date_style(
-                date,
-                state.cursor.date,
-                now.date_naive(),
-                state.cursor.hour.is_none(),
-            ),
-        )];
+    let day_has_note = state.day(date).and_then(|d| d.note()).is_some();
+    let date_format = date.format("%d.%m.%Y").to_string();
+    let date_label = if day_has_note {
+        let combined = format!("{}*", date_format);
+        format!("{:<DATE_WIDTH$}│", combined)
+    } else {
+        format!("{:<DATE_WIDTH$}│", date_format)
+    };
+    let mut spans = vec![Span::styled(
+        date_label,
+        date_style(
+            date,
+            state.cursor.date,
+            now.date_naive(),
+            state.cursor.hour.is_none(),
+        ),
+    )];
 
     for hour in hours {
         let activity = state.activity(date, *hour);

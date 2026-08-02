@@ -38,6 +38,7 @@ fn render_hour_span(
     now: &chrono::DateTime<Local>,
 ) -> Span<'static> {
     let activity = day.and_then(|entry| entry.activity(hour));
+    let day_has_note = day.and_then(|d| d.note()).is_some();
     let is_selected = state.cursor.hour == Some(hour);
     let is_now_hour = state.cursor.date == now.date_naive() && hour == now.hour() as u8;
     let marker = if is_selected {
@@ -50,14 +51,17 @@ fn render_hour_span(
 
     let content = match activity {
         Some(activity) => {
-            let note = if activity.has_note() { "*" } else { " " };
+            let note = if activity.has_note() || day_has_note { "*" } else { " " };
             let label = activity
                 .category()
                 .map(|category| category.label())
                 .unwrap_or("");
             format!("{hour:02}.00 {label:<16}{note}{marker}")
         }
-        None => format!("{hour:02}.00 {:<16} {marker}", ""),
+        None => {
+            let note = if day_has_note { "*" } else { " " };
+            format!("{hour:02}.00 {:<16}{note} {marker}", "")
+        }
     };
 
     let style = match activity {
