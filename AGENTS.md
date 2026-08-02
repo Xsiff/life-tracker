@@ -2,16 +2,27 @@
 
 ## What we're building
 
-Terminal (TUI) life-tracker in Rust (`ratatui` + `crossterm`). Two-level UI:
+Terminal (TUI) life-tracker in Rust (`ratatui` + `crossterm`). The primary UI is
+one month-grouped matrix:
 
-1. **Calendar view (main screen)** — a grid where rows are days of the week (Mon…Sun) and columns are weeks. Each cell is one day; the user navigates and selects a day cell to drill in.
-2. **Day view** — opens on a selected day cell. Shows 24 cells, one per hour of the day. The user fills each hour cell with an activity drawn from a fixed set of categories.
+1. **Matrix view (main screen)** — columns are hours `00.00..23.00`; rows are
+   sequential dates. Rows are grouped under month headers (`August 2026`,
+   `September 2026`, ...). Each cell is one `(date, hour)` slot, and the table
+   uses visible grid separators so dates and hours read as a real spreadsheet.
+   Ordinary date rows are separated by horizontal `─` rules; month boundaries use
+   stronger `═` separators.
+2. **Popup editing** — pressing enter on a focused cell opens a popup for that
+   slot. The popup lets the user choose a category by number/color, with a final
+   `[+] add note` action. Notes are edited in a text popup and noted cells show
+   `*` in the matrix.
 
 **Domain model:**
 - **Category** — a fixed set of 10 activity types (Sleep, Health, Friends/Family, Romantic, Work, Waste, Travel, Hobbies/Skills, Relaxation, Other). Categories are the palette for filling hours.
 - Each hour cell holds one categorized activity (a category plus optional specifics).
 
-Keep this two-level calendar → day(24 hours) structure and the category-driven fill model in mind; it's the core of the app and not obvious from filenames once code lands.
+Keep this single matrix + popup editing structure and the category-driven fill
+model in mind; it's the core of the app and not obvious from filenames once code
+lands.
 
 ## Architecture (unidirectional data flow)
 
@@ -90,7 +101,7 @@ life-tracker/
 ├── Cargo.toml
 ├── AGENTS.md                # this overview
 ├── src/
-│   ├── main.rs              # entry: terminal setup/teardown; wires the loop
+│   ├── main.rs              # terminal preview entry today; target loop remains
 │   │                        #   input::next_action → controller.update → view::render
 │   ├── domain/              # protocol types shared across modules + pure logic
 │   │   ├── AGENTS.md
@@ -109,12 +120,12 @@ life-tracker/
 │   ├── view/                # State → ASCII (ratatui); never mutates State
 │   │   ├── AGENTS.md
 │   │   ├── EXAMPLES.md
-│   │   ├── mod.rs           # render() dispatch by ViewMode + Overlay
-│   │   ├── calendar_view.rs # weeks x days grid rendering
-│   │   ├── day_view.rs      # 24-hour cell rendering
-│   │   ├── category_picker.rs # popup/list to choose a category
+│   │   ├── mod.rs           # render() entry + fixed preview scenes
+│   │   ├── calendar_view.rs # month-grouped day x hour matrix + legend
+│   │   ├── day_view.rs      # per-day fallback/detail rendering
+│   │   ├── category_picker.rs # popup/list to choose a category or add note
 │   │   ├── note_editor.rs   # popup text editor for day/hour notes
-│   │   ├── status_bar.rs    # "now" indicator + current focus line
+│   │   ├── status_bar.rs    # "now" indicator + current focused slot line
 │   │   └── theme.rs         # category colors, styles
 │   └── storage/
 │       ├── AGENTS.md
@@ -159,9 +170,9 @@ The **`Action`** enum is the pivot contract between `input` and `controller`. It
 variants are neutral, IR-style names for keystrokes (`MoveLeft`, `MoveRight`,
 `MoveUp`, `MoveDown`, `Confirm`, `Cancel`, `CycleView`, `Digit(u8)`,
 `Char(char)`, `Erase`, `Tick`), **not** pre-decided effects — the controller
-resolves each into an effect (open day, set category, save note, quit, …) using
-the current `ViewMode` + `Overlay`. It is defined in `domain/action.rs`; the full
-key → `InputIR` → `Action` mapping lives in
+resolves each into an effect (move the focused slot, open the category popup,
+save note, quit, …) using the current `ViewMode` + `Overlay`. It is defined in
+`domain/action.rs`; the full key → `InputIR` → `Action` mapping lives in
 [`src/input/AGENTS.md`](src/input/AGENTS.md).
 
 ## Naming conventions

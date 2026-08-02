@@ -26,10 +26,8 @@ pub fn render(frame: &mut Frame, area: Rect, state: &State, now: &DateTime<Local
 
     let lines = vec![
         Line::raw(format!(
-            "now {} {} {} · {:02}:{:02}   {}",
-            weekday(now.weekday().num_days_from_monday() as usize),
-            now.day(),
-            month(now.month0() as usize),
+            "now {} · {:02}:{:02}   {}",
+            now.format("%d.%m.%Y"),
             now.hour(),
             now.minute(),
             focus_or_error
@@ -41,32 +39,18 @@ pub fn render(frame: &mut Frame, area: Rect, state: &State, now: &DateTime<Local
 }
 
 fn focus_text(state: &State) -> String {
-    match state.view {
-        ViewMode::Calendar => {
-            let filled = state.day(state.cursor.date).map(|day| day.filled_hours()).unwrap_or(0);
+    let hour = state.cursor.hour.unwrap_or(0);
+    match state.activity(state.cursor.date, hour) {
+        Some(activity) => {
+            let note = if activity.has_note() { " *" } else { "" };
             format!(
-                "Focus: {} {} {} ({}h)",
-                weekday(state.cursor.date.weekday().num_days_from_monday() as usize),
-                state.cursor.date.day(),
-                month(state.cursor.date.month0() as usize),
-                filled
+                "Focus: {} {hour:02}.00 {}{note}",
+                state.cursor.date.format("%d.%m.%Y"),
+                activity.category().label()
             )
         }
-        ViewMode::Day => {
-            let hour = state.cursor.hour.unwrap_or(0);
-            match state.activity(state.cursor.date, hour) {
-                Some(activity) => {
-                    let note = if activity.has_note() { " *" } else { "" };
-                    format!("Focus: {hour:02}:00 {}{note}", activity.category().label())
-                }
-                None => format!("Focus: {hour:02}:00 Empty"),
-            }
-        }
+        None => format!("Focus: {} {hour:02}.00 Empty", state.cursor.date.format("%d.%m.%Y")),
     }
-}
-
-fn weekday(index: usize) -> &'static str {
-    ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][index]
 }
 
 fn month(index: usize) -> &'static str {

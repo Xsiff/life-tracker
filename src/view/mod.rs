@@ -93,7 +93,7 @@ fn render_overlay(frame: &mut Frame, state: &State, overlay: &Overlay, area: Rec
 
 fn overlay_rect(area: Rect, overlay: &Overlay) -> Rect {
     let (width, height) = match overlay {
-        Overlay::CategoryPicker { .. } => (30, 13),
+        Overlay::CategoryPicker { .. } => (30, 15),
         Overlay::NoteEditor { .. } => (30, 8),
     };
     centered_rect(area, width.min(area.width), height.min(area.height))
@@ -175,7 +175,7 @@ fn calendar_preview_state() -> State {
         view: ViewMode::Calendar,
         cursor: Cursor {
             date: date(2026, 8, 2),
-            hour: None,
+            hour: Some(13),
         },
         overlay: None,
         days,
@@ -272,7 +272,7 @@ mod tests {
             view: ViewMode::Calendar,
             cursor: Cursor {
                 date: date(2026, 8, 2),
-                hour: None,
+                hour: Some(0),
             },
             overlay: None,
             days,
@@ -280,12 +280,12 @@ mod tests {
             quit: false,
         };
 
-        let output = render_to_string(&state, 58, 12);
+        let output = render_to_string(&state, 160, 32);
         assert!(output.contains("life-tracker"));
-        assert!(output.contains("W31    W32    W33    W34    W35"));
-        assert!(output.contains("Mon"));
-        assert!(output.contains("Sun"));
-        assert!(output.contains("Focus: Sun 2 Aug (7h)"));
+        assert!(output.contains("00.00"));
+        assert!(output.contains("23.00"));
+        assert!(output.contains("**August 2026**"));
+        assert!(output.contains("Focus: 02.08.2026 00.00 Work"));
     }
 
     #[test]
@@ -312,10 +312,10 @@ mod tests {
             quit: false,
         };
 
-        let output = render_to_string(&state, 58, 12);
+        let output = render_to_string(&state, 80, 30);
         assert!(output.contains("Sun, Aug 2 2026"));
-        assert!(output.contains("13 Work"));
-        assert!(output.contains("Focus: 13:00 Work *"));
+        assert!(output.contains("13.00 Work"));
+        assert!(output.contains("Focus: 02.08.2026 13.00 Work *"));
     }
 
     #[test]
@@ -336,9 +336,10 @@ mod tests {
             quit: false,
         };
 
-        let output = render_to_string(&state, 58, 18);
-        assert!(output.contains("Set activity - 13:00"));
+        let output = render_to_string(&state, 80, 24);
+        assert!(output.contains("Set activity - 13.00"));
         assert!(output.contains("> 0 Sleep"));
+        assert!(output.contains("[+] add note"));
         assert!(output.contains("9 Other"));
     }
 
@@ -380,7 +381,7 @@ mod tests {
         let mut state = calendar_preview_state();
         state.last_error = None;
 
-        println!("{}", render_to_string(&state, 58, 12));
+        println!("{}", render_to_string(&state, 160, 24));
     }
 
     #[test]

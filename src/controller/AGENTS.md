@@ -19,8 +19,8 @@ impl Controller {
 ## Startup
 
 `new` asks `storage` for `load_all()` (a `BTreeMap<NaiveDate, Day>`) and converts
-it into the initial `State`: `ViewMode::Calendar`, a `Cursor` on today with no
-hour, no overlay, no error, `quit = false`.
+it into the initial `State`: `ViewMode::Calendar`, a `Cursor` on today and the
+current local hour, no overlay, no error, `quit = false`.
 
 ## Update flow
 
@@ -46,9 +46,10 @@ not part of any cross-module protocol, so they are defined here, not in `domain`
   an optional `Overlay`; the sparse `BTreeMap<NaiveDate, Day>` of days with data
   (`Day` itself is a `domain` protocol type — the controller/storage/view wire);
   a `last_error`; and a `quit` flag.
-- **`Cursor`** — the shared selection: a `date` plus an optional `hour` (`Some`
-  in Day view, `None` in Calendar). Single source of selection; views never keep
-  private copies that can drift.
+- **`Cursor`** — the shared selection: a `date` plus an optional `hour`.
+  In the new matrix UI the meaningful focus is the `(date, hour)` slot, so the
+  hour is normally present even in the base calendar/matrix view. Single source
+  of selection; views never keep private copies that can drift.
 - **`ViewMode`** — the base view (`Calendar`, `Day`, and future
   `Week`/`Agenda`/`Stats`). Always set.
 - **`Overlay`** — optional modal state on top of the base view: `CategoryPicker`
@@ -78,28 +79,26 @@ neutral IR-style names (`Confirm`, `Cancel`, `Digit(n)`, `Char(c)`, moves,
 `CycleView`, `Tick`); the controller resolves each into an effect by the current
 `ViewMode` + `Overlay`.
 
-- **`Confirm`** — in Calendar, opens the selected day (`Calendar → Day`); on a
-  Day hour, opens the `CategoryPicker` overlay; in `CategoryPicker`, commits the
-  highlighted category and returns to Day; in `NoteEditor`, saves the draft.
-  Chain: `Calendar --Confirm--> Day --Confirm--> CategoryPicker --Confirm--> Day`.
-- **`Cancel`** — in an overlay, discards it and returns to the underlying view;
-  on Day (no overlay), returns to Calendar. Unwinds exactly one level.
-- **`Char(c)`** — on a base view, letters are commands: `Char('n')`/`Char('N')`
-  opens the `NoteEditor` for the current target (hour note from Day, day note
-  from Calendar); `Char('x')` on a Day hour clears it (removes both the activity
-  and its note); `Char('q')` quits (sets `quit = true`; `should_quit()` reports
-  it to the main loop). Inside the `NoteEditor`, `Char(c)` inserts literal text.
+- **`Confirm`** — on the base matrix view, opens the `CategoryPicker` overlay
+  for the focused `(date, hour)` slot; in `CategoryPicker`, commits the
+  highlighted category or routes to note editing; in `NoteEditor`, saves the
+  draft.
+- **`Cancel`** — in an overlay, discards it and returns to the underlying view.
+  On the base view it is typically ignored or mapped to quit/back by the shell.
+- **`Char(c)`** — on a base view, letters are commands:
+  `Char('n')`/`Char('N')` opens the `NoteEditor` for the focused hour slot,
+  `Char('x')` clears the focused slot (activity plus note),
+  `Char('q')` quits (sets `quit = true`; `should_quit()` reports it to the main
+  loop). Inside the `NoteEditor`, `Char(c)` inserts literal text.
 - **`Erase`** — inside the `NoteEditor`, deletes the char before the text cursor;
   ignored elsewhere.
 - **`Digit(n)`** — in `CategoryPicker`, selects category `n` (digit → discriminant);
   ignored elsewhere.
-- **Moves** — Calendar shows a fixed five-week window centered on the selected
-  week: `MoveLeft`/`MoveRight` shift the window (no hard date boundary),
-  `MoveUp`/`MoveDown` change weekday within the selected week. In Day and in the
-  picker, `MoveUp`/`MoveDown` move the selection.
-- **`CycleView`** — to `Day` keeps the date and selects the current local hour
-  when no hour is set; back to `Calendar` clears the hour. (`Confirm`-opening a
-  day selects the current local hour only when the date is today, else hour `0`.)
+- **Moves** — in the base matrix, `MoveLeft`/`MoveRight` move across hours
+  within the same date, `MoveUp`/`MoveDown` move across dates while keeping the
+  hour when possible. In the picker, vertical moves change the selected row.
+- **`CycleView`** — reserved for future alternate presentations; the current
+  frontend centers around the matrix view plus popups.
 - **Note save semantics** — saving an empty note clears the corresponding note.
 - **`Tick`** — no state change; only bounds the input wait so the view can redraw
   the live clock.
