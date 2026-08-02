@@ -13,7 +13,7 @@ use crate::{controller::State, domain::Category};
 use super::theme;
 
 const DATE_WIDTH: usize = 12;
-const HOUR_WIDTH: usize = 5;
+const HOUR_CONTENT_WIDTH: usize = 5;
 
 pub fn render(
     frame: &mut Frame,
@@ -60,9 +60,10 @@ fn build_header_line() -> Line<'static> {
     let mut spans = vec![Span::raw(format!("{:<DATE_WIDTH$}│", ""))];
     for hour in 0..24u8 {
         spans.push(Span::styled(
-            format!("{hour:>2}.00│"),
+            format!("{hour:>2}.00"),
             theme::header_style(),
         ));
+        spans.push(Span::raw("│"));
     }
     Line::from(spans)
 }
@@ -79,6 +80,7 @@ fn build_day_line(state: &State, date: NaiveDate, now: &chrono::DateTime<Local>)
         let is_now = date == now.date_naive() && hour == now.hour() as u8;
         let (text, style) = cell_content(activity, is_selected, is_now);
         spans.push(Span::styled(text, style));
+        spans.push(Span::raw("│"));
     }
 
     Line::from(spans)
@@ -89,7 +91,7 @@ fn build_rule_line(fill: char, cross: char) -> String {
     line.push_str(&fill.to_string().repeat(DATE_WIDTH));
     line.push(cross);
     for _ in 0..24 {
-        line.push_str(&fill.to_string().repeat(HOUR_WIDTH));
+        line.push_str(&fill.to_string().repeat(HOUR_CONTENT_WIDTH));
         line.push(cross);
     }
     line
@@ -139,9 +141,9 @@ fn cell_content(
     let label = match activity {
         Some(activity) => {
             let note = if activity.has_note() { "*" } else { " " };
-            format!(" {}{} │", activity.category().digit(), note)
+            format!(" {}{}", activity.category().digit(), note)
         }
-        None => " ·  │".to_string(),
+        None => " ·".to_string(),
     };
 
     let base = match activity {
@@ -161,5 +163,5 @@ fn cell_content(
 }
 
 fn pad_cell(text: String) -> String {
-    format!("{text:<HOUR_WIDTH$}")
+    format!("{text:<HOUR_CONTENT_WIDTH$}")
 }
