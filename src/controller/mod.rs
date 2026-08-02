@@ -9,7 +9,7 @@ use crate::{
     storage::Store,
 };
 
-pub use state::{Cursor, NoteTarget, Overlay, State, ViewMode};
+pub use state::{CategoryPickerSelection, Cursor, NoteTarget, Overlay, State, ViewMode};
 
 pub struct Controller {
     state: State,
@@ -59,17 +59,29 @@ impl Controller {
 
         match (overlay, action) {
             (Overlay::CategoryPicker { date, hour, selected }, Action::MoveUp) => {
+                let selected = match selected {
+                    CategoryPickerSelection::Category(category) => {
+                        CategoryPickerSelection::Category(prev_category(category))
+                    }
+                    CategoryPickerSelection::AddNote => CategoryPickerSelection::AddNote,
+                };
                 self.state.overlay = Some(Overlay::CategoryPicker {
                     date,
                     hour,
-                    selected: prev_category(selected),
+                    selected,
                 });
             }
             (Overlay::CategoryPicker { date, hour, selected }, Action::MoveDown) => {
+                let selected = match selected {
+                    CategoryPickerSelection::Category(category) => {
+                        CategoryPickerSelection::Category(next_category(category))
+                    }
+                    CategoryPickerSelection::AddNote => CategoryPickerSelection::AddNote,
+                };
                 self.state.overlay = Some(Overlay::CategoryPicker {
                     date,
                     hour,
-                    selected: next_category(selected),
+                    selected,
                 });
             }
             (Overlay::CategoryPicker { date, hour, .. }, Action::Digit(n)) => {
@@ -77,12 +89,20 @@ impl Controller {
                     self.state.overlay = Some(Overlay::CategoryPicker {
                         date,
                         hour,
-                        selected: category,
+                        selected: CategoryPickerSelection::Category(category),
                     });
                 }
             }
             (Overlay::CategoryPicker { date, hour, selected }, Action::Confirm) => {
-                let activity = Activity::new(selected);
+                let CategoryPickerSelection::Category(category) = selected else {
+                    self.state.overlay = Some(Overlay::CategoryPicker {
+                        date,
+                        hour,
+                        selected,
+                    });
+                    return Ok(());
+                };
+                let activity = Activity::new(category);
                 self.store.set_hour(date, hour, &activity)?;
                 ensure_day(&mut self.state.days, date).set_hour(hour, activity);
             }
@@ -179,16 +199,16 @@ impl Controller {
         let hour = self.state.cursor.hour.unwrap_or(0);
         match action {
             Action::MoveUp => {
-                self.state.cursor.hour = Some(hour.saturating_sub(1));
-            }
-            Action::MoveDown => {
-                self.state.cursor.hour = Some((hour + 1).min(23));
-            }
-            Action::MoveLeft => {
                 self.state.cursor.date -= chrono::Duration::days(1);
             }
-            Action::MoveRight => {
+            Action::MoveDown => {
                 self.state.cursor.date += chrono::Duration::days(1);
+            }
+            Action::MoveLeft => {
+                self.move_cursor_hour(-1);
+            }
+            Action::MoveRight => {
+                self.move_cursor_hour(1);
             }
             Action::Confirm => {
                 let date = self.state.cursor.date;
@@ -196,8 +216,8 @@ impl Controller {
                 let selected = self
                     .state
                     .activity(date, hour)
-                    .map(|act| act.category())
-                    .unwrap_or(Category::Other);
+                    .map(|act| CategoryPickerSelection::Category(act.category()))
+                    .unwrap_or(CategoryPickerSelection::Category(Category::Other));
                 self.state.overlay = Some(Overlay::CategoryPicker {
                     date,
                     hour,

@@ -22,12 +22,18 @@ pub enum NoteTarget {
     Hour { date: NaiveDate, hour: u8 },
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CategoryPickerSelection {
+    Category(Category),
+    AddNote,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Overlay {
     CategoryPicker {
         date: NaiveDate,
         hour: u8,
-        selected: Category,
+        selected: CategoryPickerSelection,
     },
     NoteEditor {
         target: NoteTarget,

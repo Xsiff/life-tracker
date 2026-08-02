@@ -13,7 +13,7 @@ use ratatui::{
     Frame,
 };
 
-use crate::controller::{Overlay, State, ViewMode};
+use crate::controller::{CategoryPickerSelection, Overlay, State, ViewMode};
 use crate::{
     controller::{Cursor, NoteTarget},
     domain::{Activity, Category, Day},
@@ -212,7 +212,7 @@ fn category_picker_preview_state() -> State {
     let mut state = matrix_preview_state(Some(Overlay::CategoryPicker {
         date: date(2026, 8, 2),
         hour: 13,
-        selected: Category::Sleep,
+        selected: CategoryPickerSelection::Category(Category::Sleep),
     }));
     state.last_error = Some("Preview: Category Picker  ←/→ switch scene  q quit".to_string());
     state
@@ -242,7 +242,7 @@ mod tests {
     use chrono::{Local, NaiveDate, TimeZone};
     use ratatui::{backend::TestBackend, Terminal};
 
-    use crate::{controller::{Cursor, NoteTarget, Overlay, State, ViewMode}, domain::{Activity, Category, Day}};
+    use crate::{controller::{CategoryPickerSelection, Cursor, NoteTarget, Overlay, State, ViewMode}, domain::{Activity, Category, Day}};
 
     use super::{calendar_preview_state, matrix_preview_state, render_with_now};
 
@@ -302,7 +302,7 @@ mod tests {
             overlay: Some(Overlay::CategoryPicker {
                 date: date(2026, 8, 2),
                 hour: 13,
-                selected: Category::Sleep,
+                selected: CategoryPickerSelection::Category(Category::Sleep),
             }),
             days: BTreeMap::new(),
             last_error: None,
@@ -314,6 +314,28 @@ mod tests {
         assert!(output.contains("> 0 Sleep"));
         assert!(output.contains("[+] add note"));
         assert!(output.contains("9 Other"));
+    }
+
+    #[test]
+    fn renders_category_picker_add_note_selected() {
+        let state = State {
+            view: crate::controller::ViewMode::Calendar,
+            cursor: Cursor {
+                date: date(2026, 8, 2),
+                hour: Some(13),
+            },
+            overlay: Some(Overlay::CategoryPicker {
+                date: date(2026, 8, 2),
+                hour: 13,
+                selected: CategoryPickerSelection::AddNote,
+            }),
+            days: BTreeMap::new(),
+            last_error: None,
+            quit: false,
+        };
+
+        let output = render_to_string(&state, 80, 24);
+        assert!(output.contains("> [+] add note"));
     }
 
     #[test]
