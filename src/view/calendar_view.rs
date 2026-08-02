@@ -4,7 +4,7 @@ use ratatui::{
     layout::Rect,
     style::Style,
     text::{Line, Span},
-    widgets::Paragraph,
+    widgets::{Block, Borders, Paragraph},
     Frame,
 };
 
@@ -14,6 +14,8 @@ use super::theme;
 
 const DATE_WIDTH: usize = 12;
 const HOUR_CONTENT_WIDTH: usize = 5;
+const MIN_VISIBLE_DATE_ROWS: usize = 4;
+const MIN_VISIBLE_HOURS: usize = 4;
 
 pub fn render(
     frame: &mut Frame,
@@ -23,42 +25,56 @@ pub fn render(
 ) {
     let sections = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Min(0), Constraint::Length(2)])
+        .constraints([Constraint::Min(0), Constraint::Length(12)])
         .split(area);
 
-    frame.render_widget(Paragraph::new(build_grid_lines(state, now)), sections[0]);
-    frame.render_widget(Paragraph::new(build_legend_lines()), sections[1]);
+    frame.render_widget(
+        Paragraph::new(build_grid_lines(
+            state,
+            now,
+            sections[0].width as usize,
+            sections[0].height as usize,
+        )),
+        sections[0],
+    );
+    render_legend(frame, sections[1]);
 }
 
-fn build_grid_lines(state: &State, now: &chrono::DateTime<Local>) -> Vec<Line<'static>> {
-    let visible_dates = visible_dates(state.cursor.date, 10);
+fn build_grid_lines(
+    state: &State,
+    now: &chrono::DateTime<Local>,
+    max_width: usize,
+    max_lines: usize,
+) -> Vec<Line<'static>> {
+    let visible_dates = visible_dates(state.cursor.date, visible_date_rows(max_lines));
+    let visible_hours = visible_hours(state.cursor.hour.unwrap_or(0), visible_hour_cols(max_width));
     let mut lines = Vec::new();
-    lines.push(build_header_line());
-    lines.push(Line::raw(build_rule_line('─', '┼')));
+    lines.push(build_header_line(&visible_hours));
+    lines.push(Line::raw(build_rule_line('─', '┼', visible_hours.len())));
 
     let mut active_month = None;
     for date in visible_dates {
         if active_month != Some((date.year(), date.month())) {
             if active_month.is_some() {
-                lines.push(Line::raw(build_rule_line('═', '╪')));
+                lines.push(Line::raw(build_rule_line('═', '╪', visible_hours.len())));
             }
             active_month = Some((date.year(), date.month()));
             lines.push(Line::from(Span::styled(
                 format!("**{} {}**", date.format("%B"), date.year()),
                 theme::month_header_style(),
             )));
-            lines.push(Line::raw(build_rule_line('═', '╪')));
+            lines.push(Line::raw(build_rule_line('═', '╪', visible_hours.len())));
         }
-        lines.push(build_day_line(state, date, now));
-        lines.push(Line::raw(build_rule_line('─', '┼')));
+        lines.push(build_day_line(state, date, now, &visible_hours));
+        lines.push(Line::raw(build_rule_line('─', '┼', visible_hours.len())));
     }
 
     lines
 }
 
-fn build_header_line() -> Line<'static> {
+fn build_header_line(hours: &[u8]) -> Line<'static> {
     let mut spans = vec![Span::raw(format!("{:<DATE_WIDTH$}│", ""))];
-    for hour in 0..24u8 {
+    for hour in hours {
         spans.push(Span::styled(
             format!("{hour:>2}.00"),
             theme::header_style(),
@@ -68,16 +84,21 @@ fn build_header_line() -> Line<'static> {
     Line::from(spans)
 }
 
-fn build_day_line(state: &State, date: NaiveDate, now: &chrono::DateTime<Local>) -> Line<'static> {
+fn build_day_line(
+    state: &State,
+    date: NaiveDate,
+    now: &chrono::DateTime<Local>,
+    hours: &[u8],
+) -> Line<'static> {
     let mut spans = vec![Span::styled(
         format!("{:<DATE_WIDTH$}│", date.format("%d.%m.%Y")),
         date_style(date, state.cursor.date, now.date_naive()),
     )];
 
-    for hour in 0..24u8 {
-        let activity = state.activity(date, hour);
-        let is_selected = state.cursor.date == date && state.cursor.hour == Some(hour);
-        let is_now = date == now.date_naive() && hour == now.hour() as u8;
+    for hour in hours {
+        let activity = state.activity(date, *hour);
+        let is_selected = state.cursor.date == date && state.cursor.hour == Some(*hour);
+        let is_now = date == now.date_naive() && *hour == now.hour() as u8;
         let (text, style) = cell_content(activity, is_selected, is_now);
         spans.push(Span::styled(text, style));
         spans.push(Span::raw("│"));
@@ -86,34 +107,39 @@ fn build_day_line(state: &State, date: NaiveDate, now: &chrono::DateTime<Local>)
     Line::from(spans)
 }
 
-fn build_rule_line(fill: char, cross: char) -> String {
+fn build_rule_line(fill: char, cross: char, hour_count: usize) -> String {
     let mut line = String::new();
     line.push_str(&fill.to_string().repeat(DATE_WIDTH));
     line.push(cross);
-    for _ in 0..24 {
+    for _ in 0..hour_count {
         line.push_str(&fill.to_string().repeat(HOUR_CONTENT_WIDTH));
         line.push(cross);
     }
     line
 }
 
-fn build_legend_lines() -> Vec<Line<'static>> {
-    let first = Category::ALL[..5]
-        .iter()
-        .map(|category| legend_span(*category))
-        .collect::<Vec<_>>();
-    let second = Category::ALL[5..]
-        .iter()
-        .map(|category| legend_span(*category))
-        .collect::<Vec<_>>();
-    vec![Line::from(first), Line::from(second)]
+fn render_legend(frame: &mut Frame, area: Rect) {
+    let columns = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Length(24), Constraint::Min(0)])
+        .split(area);
+    let legend_area = columns[0];
+    let block = Block::default().title(" Palette ").borders(Borders::ALL);
+    let inner = block.inner(legend_area);
+    frame.render_widget(block, legend_area);
+    frame.render_widget(Paragraph::new(build_legend_lines()), inner);
 }
 
-fn legend_span(category: Category) -> Span<'static> {
-    Span::styled(
-        format!(" {}={}  ", category.digit(), category.label()),
-        Style::default().fg(theme::color(category)),
-    )
+fn build_legend_lines() -> Vec<Line<'static>> {
+    Category::ALL
+        .iter()
+        .map(|category| {
+            Line::from(Span::styled(
+                format!("{} = {}", category.digit(), category.label()),
+                Style::default().fg(theme::color(*category)),
+            ))
+        })
+        .collect()
 }
 
 fn visible_dates(center: NaiveDate, count: usize) -> Vec<NaiveDate> {
@@ -121,6 +147,27 @@ fn visible_dates(center: NaiveDate, count: usize) -> Vec<NaiveDate> {
     (0..count)
         .map(|offset| start + chrono::Duration::days(offset as i64))
         .collect()
+}
+
+fn visible_date_rows(max_lines: usize) -> usize {
+    let reserved_lines = 4usize;
+    let rows = max_lines.saturating_sub(reserved_lines) / 2;
+    rows.max(MIN_VISIBLE_DATE_ROWS)
+}
+
+fn visible_hour_cols(max_width: usize) -> usize {
+    let reserved = DATE_WIDTH + 1;
+    let hour_col_width = HOUR_CONTENT_WIDTH + 1;
+    let cols = max_width.saturating_sub(reserved) / hour_col_width;
+    cols.clamp(MIN_VISIBLE_HOURS, 24)
+}
+
+fn visible_hours(center: u8, count: usize) -> Vec<u8> {
+    let count = count.min(24);
+    let radius = count / 2;
+    let max_start = 24usize.saturating_sub(count);
+    let start = usize::from(center).saturating_sub(radius).min(max_start);
+    (start..start + count).map(|hour| hour as u8).collect()
 }
 
 fn date_style(date: NaiveDate, selected: NaiveDate, today: NaiveDate) -> Style {

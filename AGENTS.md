@@ -10,11 +10,14 @@ one month-grouped matrix:
    `September 2026`, ...). Each cell is one `(date, hour)` slot, and the table
    uses visible grid separators so dates and hours read as a real spreadsheet.
    Ordinary date rows are separated by horizontal `─` rules; month boundaries use
-   stronger `═` separators.
+   stronger `═` separators. The visible viewport follows the focused cell both
+   vertically and horizontally when the terminal cannot show every date/hour at
+   once.
 2. **Popup editing** — pressing enter on a focused cell opens a popup for that
    slot. The popup lets the user choose a category by number/color, with a final
    `[+] add note` action. Notes are edited in a text popup and noted cells show
-   `*` in the matrix.
+   `*` in the matrix. A boxed palette subtable at the bottom-left explains the
+   number-to-category mapping.
 
 **Domain model:**
 - **Category** — a fixed set of 10 activity types (Sleep, Health, Friends/Family, Romantic, Work, Waste, Travel, Hobbies/Skills, Relaxation, Other). Categories are the palette for filling hours.
@@ -101,7 +104,7 @@ life-tracker/
 ├── Cargo.toml
 ├── AGENTS.md                # this overview
 ├── src/
-│   ├── main.rs              # terminal preview entry today; target loop remains
+│   ├── main.rs              # terminal preview entry today; target app loop remains
 │   │                        #   input::next_action → controller.update → view::render
 │   ├── domain/              # protocol types shared across modules + pure logic
 │   │   ├── AGENTS.md
@@ -121,8 +124,7 @@ life-tracker/
 │   │   ├── AGENTS.md
 │   │   ├── EXAMPLES.md
 │   │   ├── mod.rs           # render() entry + fixed preview scenes
-│   │   ├── calendar_view.rs # month-grouped day x hour matrix + legend
-│   │   ├── day_view.rs      # per-day fallback/detail rendering
+│   │   ├── calendar_view.rs # month-grouped day x hour matrix + boxed palette
 │   │   ├── category_picker.rs # popup/list to choose a category or add note
 │   │   ├── note_editor.rs   # popup text editor for day/hour notes
 │   │   ├── status_bar.rs    # "now" indicator + current focused slot line
@@ -171,13 +173,13 @@ variants are neutral, IR-style names for keystrokes (`MoveLeft`, `MoveRight`,
 `MoveUp`, `MoveDown`, `Confirm`, `Cancel`, `CycleView`, `Digit(u8)`,
 `Char(char)`, `Erase`, `Tick`), **not** pre-decided effects — the controller
 resolves each into an effect (move the focused slot, open the category popup,
-save note, quit, …) using the current `ViewMode` + `Overlay`. It is defined in
+save note, quit, …) using the current base state + `Overlay`. It is defined in
 `domain/action.rs`; the full key → `InputIR` → `Action` mapping lives in
 [`src/input/AGENTS.md`](src/input/AGENTS.md).
 
 ## Naming conventions
 
-- **Modules / files:** `snake_case` — `day_view.rs`, `sqlite_store.rs`.
+- **Modules / files:** `snake_case` — `calendar_view.rs`, `sqlite_store.rs`.
 - **Types (structs/enums/traits):** `PascalCase` — `State`, `Action`, `Category`, `Store`.
 - **Enum variants:** `PascalCase`; **`Action` variants name the keystroke, not
   the effect** (`Confirm`, `Cancel`, `Digit`, `Char`), **noun-phrased for data**

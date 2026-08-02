@@ -3,7 +3,8 @@
 Concrete `State` → rendered-output pairs for the current matrix frontend. Each
 example shows the relevant slice of `State` and the ASCII the view produces from
 it. Colors cannot render in markdown, so the examples describe where category,
-focus, and "now" highlights appear.
+focus, and "now" highlights appear. The matrix is scrollable in both axes around
+the focused cell; the examples below show only the visible viewport.
 
 The "now" indicator in every example assumes a live clock reading of
 `02.08.2026 · 13:47` at render time (never taken from `State`).
@@ -36,26 +37,35 @@ Output:
 
 ```text
 ┌ life-tracker ───────────────────────── Aug 2026 ───────────────────────────────────────────────┐
-│            │00.00│01.00│02.00│03.00│04.00│ ... │22.00│23.00│                                  │
+│            │10.00│11.00│12.00│13.00│14.00│15.00│16.00│17.00│                                  │
 │────────────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼──────────────────────────────────│
 │ **July 2026**                                                                                  │
 │════════════╪═════╪═════╪═════╪═════╪═════╪═════╪═════╪═════╪══════════════════════════════════│
-│ 31.07.2026 │ 6   │ 6*  │ ·   │ ·   │ ·   │ ... │ ·   │ ·   │                                  │
+│ 31.07.2026 │ ·   │ ·   │ ·   │ ·   │ ·   │ ·   │ ·   │ ·   │                                  │
 │────────────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼──────────────────────────────────│
 │ **August 2026**                                                                                │
 │════════════╪═════╪═════╪═════╪═════╪═════╪═════╪═════╪═════╪══════════════════════════════════│
-│ 01.08.2026 │ ·   │ ·   │ ·   │ ·   │ ·   │ ... │ ·   │ ·   │                                  │
+│ 01.08.2026 │ ·   │ ·   │ ·   │ ·   │ ·   │ ·   │ ·   │ ·   │                                  │
 │────────────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼──────────────────────────────────│
-│ 02.08.2026 │ 0   │ 0   │ 0   │ 0   │ 0   │ ... │ ·   │ ·   │                                  │
+│ 02.08.2026 │ 4   │ 4   │ 1   │ 4*  │ 4   │ ·   │ 8   │ 7   │                                  │
 │────────────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼──────────────────────────────────│
-│ 03.08.2026 │ 0   │ 0   │ 0   │ 0   │ ·   │ ... │ ·   │ ·   │                                  │
+│ 03.08.2026 │ ·   │ ·   │ ·   │ ·   │ ·   │ ·   │ ·   │ ·   │                                  │
 │────────────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼──────────────────────────────────│
-│ ...                                                                                            │
-│ 0=Sleep  1=Health  2=Friends/Family  3=Romantic  4=Work                                       │
-│ 5=Waste  6=Travel  7=Hobbies/Skills  8=Relaxation  9=Other                                    │
+│ ┌ Palette ─────────────┐                                                                       │
+│ │0 = Sleep             │                                                                       │
+│ │1 = Health            │                                                                       │
+│ │2 = Friends/Family    │                                                                       │
+│ │3 = Romantic          │                                                                       │
+│ │4 = Work              │                                                                       │
+│ │5 = Waste             │                                                                       │
+│ │6 = Travel            │                                                                       │
+│ │7 = Hobbies/Skills    │                                                                       │
+│ │8 = Relaxation        │                                                                       │
+│ │9 = Other             │                                                                       │
+│ └──────────────────────┘                                                                       │
 ├────────────────────────────────────────────────────────────────────────────────────────────────┤
 │ now 02.08.2026 · 13:47   Focus: 02.08.2026 13.00 Work *                                        │
-│ ←↑↓→ move  ⏎ set  x clear  n note  v view  q quit                                               │
+│ ←↑↓→ move  ⏎ open  n note  x clear  q quit                                                      │
 └────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -67,6 +77,8 @@ Legend:
   also the focused cell.
 - Vertical separators, per-row `─` rules, and stronger month `═` separators are
   part of the intended appearance, not incidental spacing.
+- The visible hour columns shown above are only the current horizontal viewport;
+  moving left/right shifts that hour window around the focused hour.
 
 ## 2. Category picker overlay
 
@@ -132,20 +144,5 @@ Legend:
 - The title reflects the target slot.
 - The draft is shown verbatim and is not persisted until save.
 
-## 4. Detail day view
-
-The code still supports `ViewMode::Day` as a per-day rendering surface.
-
-```text
-┌ Sun, Aug 2 2026 ────────────────────────────────────────┐
-│ Focused day: 02.08.2026                                 │
-│ 00.00 Sleep                                             │
-│ 01.00 Sleep                                             │
-│ ...                                                     │
-│ 13.00 Work *◀                                           │
-│ ...                                                     │
-├─────────────────────────────────────────────────────────┤
-│ now 02.08.2026 · 13:47   Focus: 02.08.2026 13.00 Work * │
-│ ↑↓ move  ⏎ set  x clear  n note  v view  Esc back       │
-└─────────────────────────────────────────────────────────┘
-```
+The matrix is the only base screen now. Editing happens by focusing an hour cell
+and opening one of the two popup overlays above.

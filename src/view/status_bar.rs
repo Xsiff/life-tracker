@@ -6,7 +6,7 @@ use ratatui::{
     Frame,
 };
 
-use crate::controller::{Overlay, State, ViewMode};
+use crate::controller::{Overlay, State};
 
 pub fn render(frame: &mut Frame, area: Rect, state: &State, now: &DateTime<Local>) {
     let focus_or_error = state
@@ -18,10 +18,7 @@ pub fn render(frame: &mut Frame, area: Rect, state: &State, now: &DateTime<Local
     let commands = match state.overlay.as_ref() {
         Some(Overlay::CategoryPicker { .. }) => "↑↓ move  0-9 select  ⏎ confirm  Esc cancel",
         Some(Overlay::NoteEditor { .. }) => "type text  ⏎ save  Esc cancel  Backspace erase",
-        None => match state.view {
-            ViewMode::Calendar => "←↑↓→ move  ⏎ open  N note  v view  q quit",
-            ViewMode::Day => "↑↓ move  ⏎ set  x clear  n note  v view  Esc back",
-        },
+        None => "←↑↓→ move  ⏎ open  n note  x clear  q quit",
     };
 
     let lines = vec![
@@ -51,10 +48,4 @@ fn focus_text(state: &State) -> String {
         }
         None => format!("Focus: {} {hour:02}.00 Empty", state.cursor.date.format("%d.%m.%Y")),
     }
-}
-
-fn month(index: usize) -> &'static str {
-    [
-        "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-    ][index]
 }

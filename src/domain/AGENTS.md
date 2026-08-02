@@ -20,7 +20,7 @@ it decides a protocol:
 
 - `Action` is the wire between `input` and `controller`.
 - `Category`, `Activity`, `Day` are the wire between `controller` and `storage`
-  (persisted shape) and are read by `view` (rendered shape).
+  (persisted shape) and are read by `view` (rendered shape in the matrix/popup UI).
 
 Types that only one module owns are documented with that module:
 

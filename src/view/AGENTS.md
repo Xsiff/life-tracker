@@ -10,12 +10,10 @@ See `EXAMPLES.md` for concrete `State` → rendered-output pairs.
 
 ## Render flow
 
-`render` dispatches by `state.view` (the base `ViewMode`), then layers
-`state.overlay` on top if present:
+`render` draws the base matrix from `state`, then layers `state.overlay` on top
+if present:
 
-1. Draw the base view for the active `ViewMode`. The current primary screen is a
-   month-grouped day × hour matrix from `calendar_view.rs`; `day_view.rs`
-   remains as a per-day fallback/detail renderer.
+1. Draw the base matrix view from `calendar_view.rs`.
 2. Draw the persistent status bar (`status_bar.rs`) across every view.
 3. If `state.overlay.is_some()`, draw the overlay popup over the base
    (`category_picker.rs` or `note_editor.rs`); the base stays visible underneath.
@@ -25,16 +23,15 @@ copy.
 
 ## Modules
 
-- **`mod.rs`** — the `render()` entry point + dispatch by `ViewMode` + `Overlay`
-  + fixed preview scenes for real terminal inspection.
+- **`mod.rs`** — the `render()` entry point + overlay handling + fixed preview
+  scenes for real terminal inspection.
 - **`calendar_view.rs`** — the main matrix: columns are `00.00..23.00`, rows are
   sequential dates, and month headers split the timeline into readable blocks.
   Each populated hour cell shows the category digit in its category color; noted
   cells add `*`. The matrix uses visible vertical separators per hour column and
   horizontal rules between rows so it reads like a table. Month boundaries are
-  emphasized with a stronger `═` separator.
-- **`day_view.rs`** — a per-day list of 24 hour slots. Useful as a detail view
-  and test surface, but no longer the main frontend.
+  emphasized with a stronger `═` separator. The visible date/hour window is
+  derived from the actual terminal size and centered around the focused cell.
 - **`category_picker.rs`** — popup list, one row per `Category` in its own color,
   plus a final `[+] add note` action. The selected row is highlighted.
 - **`note_editor.rs`** — popup text box showing the `NoteEditor` draft + text
@@ -54,11 +51,15 @@ copy.
 - **Current focus.** The status bar shows the focused slot, e.g.
   `Focus: 02.08.2026 13.00 Work *`.
 - **Note markers.** A saved hour note is flagged with `*` inside the cell.
-- **Legend palette.** The matrix view ends with a palette showing every category
-  number and color mapping so the numeric cells remain readable.
+- **Legend palette.** The matrix view ends with a boxed subtable at the
+  bottom-left showing every category number and color mapping so the numeric
+  cells remain readable.
 - **Grid separators.** Column dividers are part of the view contract now; if the
   matrix is changed, keep the date column, hour columns, row lines, and stronger
   month separators visually distinct.
+- **Viewport following focus.** The matrix scrolls both vertically and
+  horizontally around the focused cell. If the terminal is too small to show all
+  dates or all 24 hours, the focused date/hour stays within the visible window.
 
 ## Category colors
 

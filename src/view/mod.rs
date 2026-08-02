@@ -1,6 +1,5 @@
 pub mod calendar_view;
 pub mod category_picker;
-pub mod day_view;
 pub mod note_editor;
 pub mod status_bar;
 pub mod theme;
@@ -38,10 +37,6 @@ pub fn preview_scenes() -> Vec<PreviewScene> {
             state: calendar_preview_state(),
         },
         PreviewScene {
-            name: "Day",
-            state: day_preview_state(None),
-        },
-        PreviewScene {
             name: "Category Picker",
             state: category_picker_preview_state(),
         },
@@ -53,10 +48,11 @@ pub fn preview_scenes() -> Vec<PreviewScene> {
 }
 
 fn render_with_now(frame: &mut Frame, state: &State, now: &DateTime<Local>) {
-    let title = match state.view {
-        ViewMode::Calendar => format!(" life-tracker ───────────────────────── {} {} ", month(now.month0() as usize), now.year()),
-        ViewMode::Day => format!(" {} ", state.cursor.date.format("%a, %b %-d %Y")),
-    };
+    let title = format!(
+        " life-tracker ───────────────────────── {} {} ",
+        month(now.month0() as usize),
+        now.year()
+    );
 
     let block = Block::default()
         .title(title)
@@ -69,10 +65,7 @@ fn render_with_now(frame: &mut Frame, state: &State, now: &DateTime<Local>) {
         .constraints([Constraint::Min(0), Constraint::Length(2)])
         .split(inner);
 
-    match state.view {
-        ViewMode::Calendar => calendar_view::render(frame, sections[0], state, now),
-        ViewMode::Day => day_view::render(frame, sections[0], state, now),
-    }
+    calendar_view::render(frame, sections[0], state, now);
     status_bar::render(frame, sections[1], state, now);
 
     if let Some(overlay) = &state.overlay {
@@ -184,7 +177,7 @@ fn calendar_preview_state() -> State {
     }
 }
 
-fn day_preview_state(overlay: Option<Overlay>) -> State {
+fn matrix_preview_state(overlay: Option<Overlay>) -> State {
     let mut days = BTreeMap::new();
     let mut day = Day::new(date(2026, 8, 2));
     for hour in 0..=6 {
@@ -203,20 +196,20 @@ fn day_preview_state(overlay: Option<Overlay>) -> State {
     days.insert(day.date(), day);
 
     State {
-        view: ViewMode::Day,
+        view: ViewMode::Calendar,
         cursor: Cursor {
             date: date(2026, 8, 2),
             hour: Some(13),
         },
         overlay,
         days,
-        last_error: Some("Preview: Day  ←/→ switch scene  q quit".to_string()),
+        last_error: Some("Preview: Matrix  ←/→ switch scene  q quit".to_string()),
         quit: false,
     }
 }
 
 fn category_picker_preview_state() -> State {
-    let mut state = day_preview_state(Some(Overlay::CategoryPicker {
+    let mut state = matrix_preview_state(Some(Overlay::CategoryPicker {
         date: date(2026, 8, 2),
         hour: 13,
         selected: Category::Sleep,
@@ -226,7 +219,7 @@ fn category_picker_preview_state() -> State {
 }
 
 fn note_editor_preview_state() -> State {
-    let mut state = day_preview_state(Some(Overlay::NoteEditor {
+    let mut state = matrix_preview_state(Some(Overlay::NoteEditor {
         target: NoteTarget::Hour {
             date: date(2026, 8, 2),
             hour: 13,
@@ -249,9 +242,9 @@ mod tests {
     use chrono::{Local, NaiveDate, TimeZone};
     use ratatui::{backend::TestBackend, Terminal};
 
-    use crate::{controller::{Cursor, NoteTarget, Overlay, State, ViewMode}, domain::{Activity, Category, Day}};
+    use crate::{controller::{Cursor, NoteTarget, Overlay, State}, domain::{Activity, Category, Day}};
 
-    use super::{calendar_preview_state, day_preview_state, render_with_now};
+    use super::{calendar_preview_state, matrix_preview_state, render_with_now};
 
     #[test]
     fn renders_calendar_view_scaffold() {
@@ -269,7 +262,7 @@ mod tests {
         days.insert(sunday.date(), sunday);
 
         let state = State {
-            view: ViewMode::Calendar,
+            view: crate::controller::ViewMode::Calendar,
             cursor: Cursor {
                 date: date(2026, 8, 2),
                 hour: Some(0),
@@ -289,39 +282,19 @@ mod tests {
     }
 
     #[test]
-    fn renders_day_view_and_focus_line() {
-        let mut days = BTreeMap::new();
-        let mut day = Day::new(date(2026, 8, 2));
-        for hour in 0..=6 {
-            day.set_hour(hour, Activity::new(Category::Sleep));
-        }
-        day.set_hour(7, Activity::new(Category::Health));
-        day.set_hour(8, Activity::new(Category::Travel));
-        day.set_hour(13, Activity::with_note(Category::Work, "Sprint planning"));
-        days.insert(day.date(), day);
+    fn renders_matrix_focus_line() {
+        let mut state = matrix_preview_state(None);
+        state.last_error = None;
 
-        let state = State {
-            view: ViewMode::Day,
-            cursor: Cursor {
-                date: date(2026, 8, 2),
-                hour: Some(13),
-            },
-            overlay: None,
-            days,
-            last_error: None,
-            quit: false,
-        };
-
-        let output = render_to_string(&state, 80, 30);
-        assert!(output.contains("Sun, Aug 2 2026"));
-        assert!(output.contains("13.00 Work"));
+        let output = render_to_string(&state, 160, 32);
+        assert!(output.contains("13.00"));
         assert!(output.contains("Focus: 02.08.2026 13.00 Work *"));
     }
 
     #[test]
     fn renders_category_picker_overlay() {
         let state = State {
-            view: ViewMode::Day,
+            view: crate::controller::ViewMode::Calendar,
             cursor: Cursor {
                 date: date(2026, 8, 2),
                 hour: Some(13),
@@ -351,7 +324,7 @@ mod tests {
         days.insert(day.date(), day);
 
         let state = State {
-            view: ViewMode::Day,
+            view: crate::controller::ViewMode::Calendar,
             cursor: Cursor {
                 date: date(2026, 8, 2),
                 hour: Some(13),
@@ -387,10 +360,10 @@ mod tests {
     #[test]
     #[ignore]
     fn print_day_example() {
-        let mut state = day_preview_state(None);
+        let mut state = matrix_preview_state(None);
         state.last_error = None;
 
-        println!("{}", render_to_string(&state, 58, 12));
+        println!("{}", render_to_string(&state, 160, 32));
     }
 
     fn render_to_string(state: &State, width: u16, height: u16) -> String {

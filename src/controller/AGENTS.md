@@ -50,8 +50,9 @@ not part of any cross-module protocol, so they are defined here, not in `domain`
   In the new matrix UI the meaningful focus is the `(date, hour)` slot, so the
   hour is normally present even in the base calendar/matrix view. Single source
   of selection; views never keep private copies that can drift.
-- **`ViewMode`** — the base view (`Calendar`, `Day`, and future
-  `Week`/`Agenda`/`Stats`). Always set.
+- **`ViewMode`** — the base presentation mode. The active frontend currently
+  uses only `Calendar` as the matrix screen; alternate modes remain a future
+  extension point.
 - **`Overlay`** — optional modal state on top of the base view: `CategoryPicker`
   (date, hour, selected category) or `NoteEditor` (target, draft text, text
   cursor). `None` means the base view has focus.
@@ -96,9 +97,11 @@ neutral IR-style names (`Confirm`, `Cancel`, `Digit(n)`, `Char(c)`, moves,
   ignored elsewhere.
 - **Moves** — in the base matrix, `MoveLeft`/`MoveRight` move across hours
   within the same date, `MoveUp`/`MoveDown` move across dates while keeping the
-  hour when possible. In the picker, vertical moves change the selected row.
-- **`CycleView`** — reserved for future alternate presentations; the current
-  frontend centers around the matrix view plus popups.
+  hour when possible. The visible matrix window follows the focused date/hour,
+  so moving beyond the currently visible slice scrolls the viewport. In the
+  picker, vertical moves change the selected row.
+- **`CycleView`** — currently unused by the frontend. Keep it neutral in the
+  protocol, but do not rely on a second base screen existing.
 - **Note save semantics** — saving an empty note clears the corresponding note.
 - **`Tick`** — no state change; only bounds the input wait so the view can redraw
   the live clock.
