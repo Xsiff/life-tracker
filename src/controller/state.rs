@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use chrono::NaiveDate;
+use chrono::{Local, NaiveDate, Timelike};
 
 use crate::domain::{Activity, Category, Day};
 
@@ -47,6 +47,20 @@ pub struct State {
 }
 
 impl State {
+    pub fn new(today: NaiveDate, days: BTreeMap<NaiveDate, Day>) -> Self {
+        Self {
+            view: ViewMode::Calendar,
+            cursor: Cursor {
+                date: today,
+                hour: Some(Local::now().hour() as u8),
+            },
+            overlay: None,
+            days,
+            last_error: None,
+            quit: false,
+        }
+    }
+
     pub fn day(&self, date: NaiveDate) -> Option<&Day> {
         self.days.get(&date)
     }

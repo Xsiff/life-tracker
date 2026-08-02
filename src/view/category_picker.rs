@@ -12,7 +12,7 @@ use super::theme;
 pub fn render(frame: &mut Frame, area: Rect, hour: u8, selected: Category) {
     frame.render_widget(Clear, area);
     let block = Block::default()
-        .title(format!(" Set activity - {hour:02}:00 "))
+        .title(format!(" Set activity - {hour:02}.00 "))
         .borders(Borders::ALL);
     let inner = block.inner(area);
     frame.render_widget(block, area);
@@ -31,6 +31,7 @@ pub fn render(frame: &mut Frame, area: Rect, hour: u8, selected: Category) {
         )));
     }
     lines.push(Line::raw("────────────────────────────"));
+    lines.push(Line::from(Span::styled("[+] add note", theme::header_style())));
     lines.push(Line::raw("⏎ confirm   Esc cancel"));
 
     frame.render_widget(Paragraph::new(lines), inner);

@@ -19,18 +19,13 @@ pub fn render(
 ) {
     let date = state.cursor.date;
     let day = state.day(date);
-    let mut lines = Vec::new();
+    let mut lines = vec![Line::from(Span::styled(
+        format!("Focused day: {}", date.format("%d.%m.%Y")),
+        theme::header_style(),
+    ))];
 
-    for row in 0..8 {
-        let mut spans = Vec::new();
-        for col in 0..3 {
-            let hour = (row + col * 8) as u8;
-            spans.push(render_hour_span(state, day, hour, now));
-            if col < 2 {
-                spans.push(Span::raw("  "));
-            }
-        }
-        lines.push(Line::from(spans));
+    for hour in 0..24u8 {
+        lines.push(Line::from(render_hour_span(state, day, hour, now)));
     }
 
     frame.render_widget(Paragraph::new(lines), area);
@@ -57,11 +52,11 @@ fn render_hour_span(
         Some(activity) => {
             let note = if activity.has_note() { "*" } else { " " };
             format!(
-                "{hour:02} {:<16}{note}{marker}",
+                "{hour:02}.00 {:<16}{note}{marker}",
                 activity.category().label()
             )
         }
-        None => format!("{hour:02} {:<16} {marker}", ""),
+        None => format!("{hour:02}.00 {:<16} {marker}", ""),
     };
 
     let style = match activity {
@@ -70,7 +65,7 @@ fn render_hour_span(
             if is_selected {
                 theme::selected(base)
             } else if is_now_hour {
-                base.bg(ratatui::style::Color::Indexed(236))
+                theme::now_cell(base)
             } else {
                 base
             }
@@ -80,7 +75,7 @@ fn render_hour_span(
             if is_selected {
                 theme::selected(base)
             } else if is_now_hour {
-                base.bg(ratatui::style::Color::Indexed(236))
+                theme::now_cell(base)
             } else {
                 base
             }

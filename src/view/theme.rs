@@ -37,3 +37,22 @@ pub fn now_style() -> Style {
         .fg(Color::Indexed(220))
         .add_modifier(Modifier::BOLD)
 }
+
+pub fn now_cell(style: Style) -> Style {
+    style
+        .bg(Color::Indexed(58))
+        .fg(Color::Indexed(230))
+        .add_modifier(Modifier::BOLD)
+}
+
+pub fn header_style() -> Style {
+    Style::default()
+        .fg(Color::Indexed(153))
+        .add_modifier(Modifier::BOLD)
+}
+
+pub fn month_header_style() -> Style {
+    Style::default()
+        .fg(Color::Indexed(222))
+        .add_modifier(Modifier::BOLD)
+}
