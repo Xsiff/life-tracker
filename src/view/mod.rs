@@ -5,6 +5,8 @@ pub mod note_editor;
 pub mod status_bar;
 pub mod theme;
 
+use std::collections::BTreeMap;
+
 use chrono::{DateTime, Datelike, Local};
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
@@ -13,10 +15,41 @@ use ratatui::{
 };
 
 use crate::controller::{Overlay, State, ViewMode};
+use crate::{
+    controller::{Cursor, NoteTarget},
+    domain::{Activity, Category, Day},
+};
+
+#[derive(Debug, Clone)]
+pub struct PreviewScene {
+    pub name: &'static str,
+    pub state: State,
+}
 
 pub fn render(frame: &mut Frame, state: &State) {
     let now = Local::now();
     render_with_now(frame, state, &now);
+}
+
+pub fn preview_scenes() -> Vec<PreviewScene> {
+    vec![
+        PreviewScene {
+            name: "Calendar",
+            state: calendar_preview_state(),
+        },
+        PreviewScene {
+            name: "Day",
+            state: day_preview_state(None),
+        },
+        PreviewScene {
+            name: "Category Picker",
+            state: category_picker_preview_state(),
+        },
+        PreviewScene {
+            name: "Note Editor",
+            state: note_editor_preview_state(),
+        },
+    ]
 }
 
 fn render_with_now(frame: &mut Frame, state: &State, now: &DateTime<Local>) {
@@ -81,6 +114,134 @@ fn month(index: usize) -> &'static str {
     ][index]
 }
 
+fn calendar_preview_state() -> State {
+    let mut days = BTreeMap::new();
+
+    let mut monday = Day::new(date(2026, 7, 27));
+    for hour in 0..16 {
+        monday.set_hour(hour, Activity::new(Category::Sleep));
+    }
+    days.insert(monday.date(), monday);
+
+    let mut tuesday = Day::new(date(2026, 7, 28));
+    for hour in 0..24 {
+        tuesday.set_hour(hour, Activity::new(Category::Work));
+    }
+    days.insert(tuesday.date(), tuesday);
+
+    let mut wednesday = Day::new(date(2026, 7, 29));
+    for hour in 0..3 {
+        wednesday.set_hour(hour, Activity::new(Category::Health));
+    }
+    days.insert(wednesday.date(), wednesday);
+
+    let mut thursday = Day::new(date(2026, 7, 30));
+    for hour in 0..16 {
+        thursday.set_hour(hour, Activity::new(Category::Sleep));
+    }
+    days.insert(thursday.date(), thursday);
+
+    let mut friday = Day::new(date(2026, 7, 31));
+    for hour in 0..8 {
+        friday.set_hour(hour, Activity::new(Category::Travel));
+    }
+    days.insert(friday.date(), friday);
+
+    let mut sunday = Day::new(date(2026, 8, 2));
+    for hour in 0..7 {
+        sunday.set_hour(hour, Activity::new(Category::Work));
+    }
+    days.insert(sunday.date(), sunday);
+
+    let mut monday_next = Day::new(date(2026, 8, 3));
+    for hour in 0..8 {
+        monday_next.set_hour(hour, Activity::new(Category::Sleep));
+    }
+    days.insert(monday_next.date(), monday_next);
+
+    let mut tuesday_next = Day::new(date(2026, 8, 4));
+    for hour in 0..16 {
+        tuesday_next.set_hour(hour, Activity::new(Category::Work));
+    }
+    days.insert(tuesday_next.date(), tuesday_next);
+
+    let mut wednesday_next = Day::new(date(2026, 8, 5));
+    for hour in 0..8 {
+        wednesday_next.set_hour(hour, Activity::new(Category::Health));
+    }
+    days.insert(wednesday_next.date(), wednesday_next);
+
+    State {
+        view: ViewMode::Calendar,
+        cursor: Cursor {
+            date: date(2026, 8, 2),
+            hour: None,
+        },
+        overlay: None,
+        days,
+        last_error: Some("Preview: Calendar  ←/→ switch scene  q quit".to_string()),
+        quit: false,
+    }
+}
+
+fn day_preview_state(overlay: Option<Overlay>) -> State {
+    let mut days = BTreeMap::new();
+    let mut day = Day::new(date(2026, 8, 2));
+    for hour in 0..=6 {
+        day.set_hour(hour, Activity::new(Category::Sleep));
+    }
+    day.set_hour(7, Activity::new(Category::Health));
+    day.set_hour(8, Activity::new(Category::Travel));
+    for hour in 9..=11 {
+        day.set_hour(hour, Activity::new(Category::Work));
+    }
+    day.set_hour(12, Activity::new(Category::Health));
+    day.set_hour(13, Activity::with_note(Category::Work, "Sprint planning, blocked"));
+    day.set_hour(14, Activity::new(Category::Work));
+    day.set_hour(16, Activity::new(Category::Relaxation));
+    day.set_hour(17, Activity::new(Category::HobbiesSkills));
+    days.insert(day.date(), day);
+
+    State {
+        view: ViewMode::Day,
+        cursor: Cursor {
+            date: date(2026, 8, 2),
+            hour: Some(13),
+        },
+        overlay,
+        days,
+        last_error: Some("Preview: Day  ←/→ switch scene  q quit".to_string()),
+        quit: false,
+    }
+}
+
+fn category_picker_preview_state() -> State {
+    let mut state = day_preview_state(Some(Overlay::CategoryPicker {
+        date: date(2026, 8, 2),
+        hour: 13,
+        selected: Category::Sleep,
+    }));
+    state.last_error = Some("Preview: Category Picker  ←/→ switch scene  q quit".to_string());
+    state
+}
+
+fn note_editor_preview_state() -> State {
+    let mut state = day_preview_state(Some(Overlay::NoteEditor {
+        target: NoteTarget::Hour {
+            date: date(2026, 8, 2),
+            hour: 13,
+        },
+        draft: "Sprint planning, blocked\non API keys.".to_string(),
+        cursor: 40,
+    }));
+    state.last_error = Some("Preview: Note Editor  ←/→ switch scene  q quit".to_string());
+    state
+}
+
+fn date(year: i32, month: u32, day: u32) -> chrono::NaiveDate {
+    chrono::NaiveDate::from_ymd_opt(year, month, day).expect("valid date")
+}
+
 #[cfg(test)]
 mod tests {
     use std::collections::BTreeMap;
@@ -88,12 +249,9 @@ mod tests {
     use chrono::{Local, NaiveDate, TimeZone};
     use ratatui::{backend::TestBackend, Terminal};
 
-    use crate::{
-        controller::{Cursor, NoteTarget, Overlay, State, ViewMode},
-        domain::{Activity, Category, Day},
-    };
+    use crate::{controller::{Cursor, NoteTarget, Overlay, State, ViewMode}, domain::{Activity, Category, Day}};
 
-    use super::render_with_now;
+    use super::{calendar_preview_state, day_preview_state, render_with_now};
 
     #[test]
     fn renders_calendar_view_scaffold() {
@@ -219,73 +377,8 @@ mod tests {
     #[test]
     #[ignore]
     fn print_calendar_example() {
-        let mut days = BTreeMap::new();
-
-        let mut monday = Day::new(date(2026, 7, 27));
-        for hour in 0..16 {
-            monday.set_hour(hour, Activity::new(Category::Sleep));
-        }
-        days.insert(monday.date(), monday);
-
-        let mut tuesday = Day::new(date(2026, 7, 28));
-        for hour in 0..24 {
-            tuesday.set_hour(hour, Activity::new(Category::Work));
-        }
-        days.insert(tuesday.date(), tuesday);
-
-        let mut wednesday = Day::new(date(2026, 7, 29));
-        for hour in 0..3 {
-            wednesday.set_hour(hour, Activity::new(Category::Health));
-        }
-        days.insert(wednesday.date(), wednesday);
-
-        let mut thursday = Day::new(date(2026, 7, 30));
-        for hour in 0..16 {
-            thursday.set_hour(hour, Activity::new(Category::Sleep));
-        }
-        days.insert(thursday.date(), thursday);
-
-        let mut friday = Day::new(date(2026, 7, 31));
-        for hour in 0..8 {
-            friday.set_hour(hour, Activity::new(Category::Travel));
-        }
-        days.insert(friday.date(), friday);
-
-        let mut sunday = Day::new(date(2026, 8, 2));
-        for hour in 0..7 {
-            sunday.set_hour(hour, Activity::new(Category::Work));
-        }
-        days.insert(sunday.date(), sunday);
-
-        let mut monday_next = Day::new(date(2026, 8, 3));
-        for hour in 0..8 {
-            monday_next.set_hour(hour, Activity::new(Category::Sleep));
-        }
-        days.insert(monday_next.date(), monday_next);
-
-        let mut tuesday_next = Day::new(date(2026, 8, 4));
-        for hour in 0..16 {
-            tuesday_next.set_hour(hour, Activity::new(Category::Work));
-        }
-        days.insert(tuesday_next.date(), tuesday_next);
-
-        let mut wednesday_next = Day::new(date(2026, 8, 5));
-        for hour in 0..8 {
-            wednesday_next.set_hour(hour, Activity::new(Category::Health));
-        }
-        days.insert(wednesday_next.date(), wednesday_next);
-
-        let state = State {
-            view: ViewMode::Calendar,
-            cursor: Cursor {
-                date: date(2026, 8, 2),
-                hour: None,
-            },
-            overlay: None,
-            days,
-            last_error: None,
-            quit: false,
-        };
+        let mut state = calendar_preview_state();
+        state.last_error = None;
 
         println!("{}", render_to_string(&state, 58, 12));
     }
@@ -293,34 +386,8 @@ mod tests {
     #[test]
     #[ignore]
     fn print_day_example() {
-        let mut days = BTreeMap::new();
-        let mut day = Day::new(date(2026, 8, 2));
-        for hour in 0..=6 {
-            day.set_hour(hour, Activity::new(Category::Sleep));
-        }
-        day.set_hour(7, Activity::new(Category::Health));
-        day.set_hour(8, Activity::new(Category::Travel));
-        for hour in 9..=11 {
-            day.set_hour(hour, Activity::new(Category::Work));
-        }
-        day.set_hour(12, Activity::new(Category::Health));
-        day.set_hour(13, Activity::with_note(Category::Work, "Sprint planning, blocked"));
-        day.set_hour(14, Activity::new(Category::Work));
-        day.set_hour(16, Activity::new(Category::Relaxation));
-        day.set_hour(17, Activity::new(Category::HobbiesSkills));
-        days.insert(day.date(), day);
-
-        let state = State {
-            view: ViewMode::Day,
-            cursor: Cursor {
-                date: date(2026, 8, 2),
-                hour: Some(13),
-            },
-            overlay: None,
-            days,
-            last_error: None,
-            quit: false,
-        };
+        let mut state = day_preview_state(None);
+        state.last_error = None;
 
         println!("{}", render_to_string(&state, 58, 12));
     }
