@@ -102,13 +102,13 @@ mod tests {
         for hour in 0..16 {
             monday.set_hour(hour, Activity::new(Category::Sleep));
         }
-        days.insert(monday.date, monday);
+        days.insert(monday.date(), monday);
 
         let mut sunday = Day::new(date(2026, 8, 2));
         for hour in 0..7 {
             sunday.set_hour(hour, Activity::new(Category::Work));
         }
-        days.insert(sunday.date, sunday);
+        days.insert(sunday.date(), sunday);
 
         let state = State {
             view: ViewMode::Calendar,
@@ -140,7 +140,7 @@ mod tests {
         day.set_hour(7, Activity::new(Category::Health));
         day.set_hour(8, Activity::new(Category::Travel));
         day.set_hour(13, Activity::with_note(Category::Work, "Sprint planning"));
-        days.insert(day.date, day);
+        days.insert(day.date(), day);
 
         let state = State {
             view: ViewMode::Day,
@@ -189,7 +189,7 @@ mod tests {
         let mut days = BTreeMap::new();
         let mut day = Day::new(date(2026, 8, 2));
         day.set_hour(13, Activity::new(Category::Work));
-        days.insert(day.date, day);
+        days.insert(day.date(), day);
 
         let state = State {
             view: ViewMode::Day,
@@ -225,55 +225,55 @@ mod tests {
         for hour in 0..16 {
             monday.set_hour(hour, Activity::new(Category::Sleep));
         }
-        days.insert(monday.date, monday);
+        days.insert(monday.date(), monday);
 
         let mut tuesday = Day::new(date(2026, 7, 28));
         for hour in 0..24 {
             tuesday.set_hour(hour, Activity::new(Category::Work));
         }
-        days.insert(tuesday.date, tuesday);
+        days.insert(tuesday.date(), tuesday);
 
         let mut wednesday = Day::new(date(2026, 7, 29));
         for hour in 0..3 {
             wednesday.set_hour(hour, Activity::new(Category::Health));
         }
-        days.insert(wednesday.date, wednesday);
+        days.insert(wednesday.date(), wednesday);
 
         let mut thursday = Day::new(date(2026, 7, 30));
         for hour in 0..16 {
             thursday.set_hour(hour, Activity::new(Category::Sleep));
         }
-        days.insert(thursday.date, thursday);
+        days.insert(thursday.date(), thursday);
 
         let mut friday = Day::new(date(2026, 7, 31));
         for hour in 0..8 {
             friday.set_hour(hour, Activity::new(Category::Travel));
         }
-        days.insert(friday.date, friday);
+        days.insert(friday.date(), friday);
 
         let mut sunday = Day::new(date(2026, 8, 2));
         for hour in 0..7 {
             sunday.set_hour(hour, Activity::new(Category::Work));
         }
-        days.insert(sunday.date, sunday);
+        days.insert(sunday.date(), sunday);
 
         let mut monday_next = Day::new(date(2026, 8, 3));
         for hour in 0..8 {
             monday_next.set_hour(hour, Activity::new(Category::Sleep));
         }
-        days.insert(monday_next.date, monday_next);
+        days.insert(monday_next.date(), monday_next);
 
         let mut tuesday_next = Day::new(date(2026, 8, 4));
         for hour in 0..16 {
             tuesday_next.set_hour(hour, Activity::new(Category::Work));
         }
-        days.insert(tuesday_next.date, tuesday_next);
+        days.insert(tuesday_next.date(), tuesday_next);
 
         let mut wednesday_next = Day::new(date(2026, 8, 5));
         for hour in 0..8 {
             wednesday_next.set_hour(hour, Activity::new(Category::Health));
         }
-        days.insert(wednesday_next.date, wednesday_next);
+        days.insert(wednesday_next.date(), wednesday_next);
 
         let state = State {
             view: ViewMode::Calendar,
@@ -308,7 +308,7 @@ mod tests {
         day.set_hour(14, Activity::new(Category::Work));
         day.set_hour(16, Activity::new(Category::Relaxation));
         day.set_hour(17, Activity::new(Category::HobbiesSkills));
-        days.insert(day.date, day);
+        days.insert(day.date(), day);
 
         let state = State {
             view: ViewMode::Day,

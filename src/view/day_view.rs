@@ -58,7 +58,7 @@ fn render_hour_span(
             let note = if activity.has_note() { "*" } else { " " };
             format!(
                 "{hour:02} {:<16}{note}{marker}",
-                activity.category.label()
+                activity.category().label()
             )
         }
         None => format!("{hour:02} {:<16} {marker}", ""),
@@ -66,7 +66,7 @@ fn render_hour_span(
 
     let style = match activity {
         Some(activity) => {
-            let base = Style::default().fg(theme::color(activity.category));
+            let base = Style::default().fg(theme::color(activity.category()));
             if is_selected {
                 theme::selected(base)
             } else if is_now_hour {

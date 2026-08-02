@@ -1,5 +1,8 @@
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+use std::fmt;
+use std::str::FromStr;
+
 #[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Category {
     Sleep = 0,
     Health = 1,
@@ -14,21 +17,44 @@ pub enum Category {
 }
 
 impl Category {
-    pub const ALL: [Category; 10] = [
-        Category::Sleep,
-        Category::Health,
-        Category::FriendsFamily,
-        Category::Romantic,
-        Category::Work,
-        Category::Waste,
-        Category::Travel,
-        Category::HobbiesSkills,
-        Category::Relaxation,
-        Category::Other,
+    pub const ALL: [Self; 10] = [
+        Self::Sleep,
+        Self::Health,
+        Self::FriendsFamily,
+        Self::Romantic,
+        Self::Work,
+        Self::Waste,
+        Self::Travel,
+        Self::HobbiesSkills,
+        Self::Relaxation,
+        Self::Other,
     ];
 
-    pub fn from_digit(digit: u8) -> Option<Self> {
-        match digit {
+    pub const fn as_u8(self) -> u8 {
+        self as u8
+    }
+
+    pub const fn name(self) -> &'static str {
+        match self {
+            Self::Sleep => "Sleep",
+            Self::Health => "Health",
+            Self::FriendsFamily => "Friends/Family",
+            Self::Romantic => "Romantic",
+            Self::Work => "Work",
+            Self::Waste => "Waste",
+            Self::Travel => "Travel",
+            Self::HobbiesSkills => "Hobbies/Skills",
+            Self::Relaxation => "Relaxation",
+            Self::Other => "Other",
+        }
+    }
+
+    pub const fn label(self) -> &'static str {
+        self.name()
+    }
+
+    pub const fn from_u8(value: u8) -> Option<Self> {
+        match value {
             0 => Some(Self::Sleep),
             1 => Some(Self::Health),
             2 => Some(Self::FriendsFamily),
@@ -43,22 +69,66 @@ impl Category {
         }
     }
 
-    pub fn digit(self) -> u8 {
-        self as u8
+    pub const fn from_digit(value: u8) -> Option<Self> {
+        Self::from_u8(value)
     }
 
-    pub fn label(self) -> &'static str {
-        match self {
-            Self::Sleep => "Sleep",
-            Self::Health => "Health",
-            Self::FriendsFamily => "Friends/Family",
-            Self::Romantic => "Romantic",
-            Self::Work => "Work",
-            Self::Waste => "Waste",
-            Self::Travel => "Travel",
-            Self::HobbiesSkills => "Hobbies/Skills",
-            Self::Relaxation => "Relaxation",
-            Self::Other => "Other",
+    pub const fn digit(self) -> u8 {
+        self.as_u8()
+    }
+
+    fn parse_key(value: &str) -> Option<Self> {
+        let normalized = value.trim().to_ascii_lowercase().replace(['/', '_', '-'], "");
+        match normalized.as_str() {
+            "sleep" => Some(Self::Sleep),
+            "health" => Some(Self::Health),
+            "friendsfamily" => Some(Self::FriendsFamily),
+            "romantic" => Some(Self::Romantic),
+            "work" => Some(Self::Work),
+            "waste" => Some(Self::Waste),
+            "travel" => Some(Self::Travel),
+            "hobbiesskills" => Some(Self::HobbiesSkills),
+            "relaxation" => Some(Self::Relaxation),
+            "other" => Some(Self::Other),
+            _ => None,
         }
+    }
+}
+
+impl fmt::Display for Category {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl FromStr for Category {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::parse_key(s).ok_or("unknown category")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Category;
+
+    #[test]
+    fn category_round_trips_through_index() {
+        for category in Category::ALL {
+            assert_eq!(Category::from_u8(category.as_u8()), Some(category));
+        }
+    }
+
+    #[test]
+    fn category_parses_flexible_names() {
+        assert_eq!(
+            "Friends/Family".parse::<Category>().ok(),
+            Some(Category::FriendsFamily)
+        );
+        assert_eq!(
+            "hobbies_skills".parse::<Category>().ok(),
+            Some(Category::HobbiesSkills)
+        );
     }
 }

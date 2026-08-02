@@ -57,7 +57,7 @@ fn focus_text(state: &State) -> String {
             match state.activity(state.cursor.date, hour) {
                 Some(activity) => {
                     let note = if activity.has_note() { " *" } else { "" };
-                    format!("Focus: {hour:02}:00 {}{note}", activity.category.label())
+                    format!("Focus: {hour:02}:00 {}{note}", activity.category().label())
                 }
                 None => format!("Focus: {hour:02}:00 Empty"),
             }
