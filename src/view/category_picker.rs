@@ -41,6 +41,20 @@ pub fn render(frame: &mut Frame, area: Rect, target: &NoteTarget, selected: Cate
         format!("{note_prefix} [+] add note"),
         picker_style(note_selected, theme::header_style()),
     )));
+    let delete_note_selected = selected == CategoryPickerSelection::DeleteNote;
+    let delete_note_prefix = if delete_note_selected { ">" } else { " " };
+    lines.push(Line::from(Span::styled(
+        format!("{delete_note_prefix} [x] delete note"),
+        picker_style(delete_note_selected, theme::header_style()),
+    )));
+    if matches!(target, NoteTarget::Hour { .. }) {
+        let delete_activity_selected = selected == CategoryPickerSelection::DeleteActivity;
+        let delete_activity_prefix = if delete_activity_selected { ">" } else { " " };
+        lines.push(Line::from(Span::styled(
+            format!("{delete_activity_prefix} [x] delete activity"),
+            picker_style(delete_activity_selected, theme::header_style()),
+        )));
+    }
     lines.push(Line::raw("⏎ confirm   Esc cancel"));
 
     frame.render_widget(Paragraph::new(lines), inner);

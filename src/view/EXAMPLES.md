@@ -94,6 +94,8 @@ Output:
         │   8 Relaxation             │
         │   9 Other                  │
         │   [+] add note             │
+        │   [x] delete note          │
+        │   [x] delete activity      │
         │ ⏎ confirm   Esc cancel     │
         └────────────────────────────┘
 ```
@@ -102,8 +104,11 @@ Legend:
 - Each category row uses the category color.
 - The selected row keeps its category color but adds the focus highlight.
 - `[+] add note` opens the note editor for the same `(date, hour)` slot.
+- `[x] delete note` clears only the note for that hour, preserving its category.
+- `[x] delete activity` clears only the category for that hour and preserves an
+  existing note.
 - The add-note row is part of the picker selection model, so it can be focused
-  and confirmed just like a category row.
+  and confirmed just like the category and delete rows.
 
 ## 3. Day note picker
 
@@ -125,6 +130,7 @@ Output:
 ```text
         ┌ Day - 02.08.2026 ─────────┐
         │ > [+] add note            │
+        │   [x] delete note         │
         │ ⏎ confirm   Esc cancel    │
         └───────────────────────────┘
 ```
@@ -132,7 +138,7 @@ Output:
 Legend:
 - Day focus means actions apply to the whole day, not an hour slot.
 - Pressing `Enter` on a day focus opens this picker, which intentionally exposes
-  only the add-note action.
+  only note actions.
 
 ## 4. Note editor overlay
 

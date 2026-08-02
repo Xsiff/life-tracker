@@ -25,6 +25,8 @@ pub enum NoteTarget {
 pub enum CategoryPickerSelection {
     Category(Category),
     AddNote,
+    DeleteNote,
+    DeleteActivity,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -51,17 +51,21 @@ fn render_hour_span(
     let content = match activity {
         Some(activity) => {
             let note = if activity.has_note() { "*" } else { " " };
-            format!(
-                "{hour:02}.00 {:<16}{note}{marker}",
-                activity.category().label()
-            )
+            let label = activity
+                .category()
+                .map(|category| category.label())
+                .unwrap_or("");
+            format!("{hour:02}.00 {label:<16}{note}{marker}")
         }
         None => format!("{hour:02}.00 {:<16} {marker}", ""),
     };
 
     let style = match activity {
         Some(activity) => {
-            let base = theme::cell_style(activity.category());
+            let base = activity
+                .category()
+                .map(theme::cell_style)
+                .unwrap_or_else(theme::empty_style);
             if is_selected {
                 theme::selected(base)
             } else if is_now_hour {

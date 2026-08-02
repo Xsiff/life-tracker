@@ -43,9 +43,10 @@ Types that only one module owns are documented with that module:
   discriminants `0..9`. Only the identity and order of categories live here; the
   color for each is a `view` concern, not a protocol concern.
 
-- **`Activity`** (`activity.rs`) — what fills a single hour: one `Category` plus
-  an optional per-hour note. This is the persisted/rendered unit crossing
-  controller ↔ storage ↔ view.
+- **`Activity`** (`activity.rs`) — what fills a single hour: an optional
+  `Category` plus an optional per-hour note. Hour slots therefore support
+  category-only, note-only, or category+note states. This is the
+  persisted/rendered unit crossing controller ↔ storage ↔ view.
 
 - **`Day`** (`calendar.rs`) — one calendar date: its `NaiveDate`, its 24 hour
   slots (each an optional `Activity`, index = hour `0..23`), and an optional

@@ -68,7 +68,11 @@ impl Day {
     }
 
     pub fn filled_hours(&self) -> usize {
-        self.hours.iter().flatten().count()
+        self.hours
+            .iter()
+            .flatten()
+            .filter(|activity| activity.has_category())
+            .count()
     }
 
     pub fn is_empty(&self) -> bool {
@@ -78,7 +82,9 @@ impl Day {
     pub fn dominant_category(&self) -> Option<Category> {
         let mut counts = [0usize; Category::ALL.len()];
         for activity in self.hours.iter().flatten() {
-            counts[usize::from(activity.category().as_u8())] += 1;
+            if let Some(category) = activity.category() {
+                counts[usize::from(category.as_u8())] += 1;
+            }
         }
 
         let mut best = None;

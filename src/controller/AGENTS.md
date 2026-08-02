@@ -57,7 +57,8 @@ not part of any cross-module protocol, so they are defined here, not in `domain`
   (a `NoteTarget` plus the selected picker row) or `NoteEditor` (target, draft
   text, text cursor). `None` means the base view has focus.
 - **`CategoryPickerSelection`** — the focused row inside `CategoryPicker`:
-  either a concrete `Category` or the trailing `AddNote` action.
+  either a concrete `Category` or one of the trailing actions:
+  `AddNote`, `DeleteNote`, or `DeleteActivity`.
 - **`NoteTarget`** — what a note edit applies to: a whole `Day` or a single
   `Hour` (date + hour).
 
@@ -84,10 +85,14 @@ base state + `Overlay`.
 
 - **`Confirm`** — on the base matrix view, opens the `CategoryPicker` overlay
   for the focused target. If focus is on an hour cell, the picker offers
-  categories plus `AddNote`; if focus is on the date column, the picker exposes
-  only `AddNote`. In `CategoryPicker`, confirming a category saves that hour
-  activity; confirming `AddNote` opens the note editor for the same target. In
-  `NoteEditor`, `Confirm` saves the draft.
+  categories plus `AddNote`, `DeleteNote`, and `DeleteActivity`; if focus is on
+  the date column, the picker exposes only `AddNote` and `DeleteNote`. In
+  `CategoryPicker`, confirming a category saves that hour activity; confirming
+  `AddNote` opens the note editor for the same target; confirming a delete row
+  clears only that specific thing and otherwise no-ops when the target is
+  already empty. `DeleteActivity` clears only the category and preserves a note
+  if one exists; `DeleteNote` clears only the note and preserves a category if
+  one exists. In `NoteEditor`, `Confirm` saves the draft.
 - **`Cancel`** — in an overlay, discards it and returns to the underlying view.
   On the base view it is typically ignored or mapped to quit/back by the shell.
 - **`Char(c)`** — on a base view, letters are commands:
@@ -112,6 +117,8 @@ base state + `Overlay`.
 - **`CycleView`** — currently unused by the frontend. Keep it neutral in the
   protocol, but do not rely on a second base screen existing.
 - **Note save semantics** — saving an empty note clears the corresponding note.
+  For an hour target, this clears only the note and preserves the category; if
+  the hour had no category either, the slot disappears entirely.
 - **`Tick`** — no state change; only bounds the input wait so the view can redraw
   the live clock.
 

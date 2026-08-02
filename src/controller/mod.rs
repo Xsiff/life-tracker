@@ -81,7 +81,14 @@ impl Controller {
             (Overlay::CategoryPicker { target, selected }, Action::Confirm) => match selected {
                 CategoryPickerSelection::Category(category) => {
                     if let NoteTarget::Hour { date, hour } = target {
-                        let activity = Activity::new(category);
+                        let activity = match self.state.activity(date, hour) {
+                            Some(existing) => {
+                                let mut activity = existing.clone();
+                                activity.set_category(category);
+                                activity
+                            }
+                            None => Activity::new(category),
+                        };
                         self.store.set_hour(date, hour, &activity)?;
                         ensure_day(&mut self.state.days, date).set_hour(hour, activity);
                         self.state.overlay = None;
@@ -95,6 +102,21 @@ impl Controller {
                 }
                 CategoryPickerSelection::AddNote => {
                     self.open_note_editor(target);
+                }
+                CategoryPickerSelection::DeleteNote => {
+                    self.delete_note(target)?;
+                }
+                CategoryPickerSelection::DeleteActivity => {
+                    if let NoteTarget::Hour { date, hour } = target {
+                        self.clear_hour_if_present(date, hour)?;
+                        self.state.overlay = None;
+                        self.restore_focus(target);
+                    } else {
+                        self.state.overlay = Some(Overlay::CategoryPicker {
+                            target,
+                            selected: CategoryPickerSelection::DeleteNote,
+                        });
+                    }
                 }
             },
             (Overlay::CategoryPicker { target, .. }, Action::Cancel) => {
@@ -241,19 +263,16 @@ impl Controller {
             }
             NoteTarget::Hour { date, hour } => {
                 if draft.trim().is_empty() {
-                    self.store.clear_hour(date, hour)?;
-                    if let Some(day) = self.state.days.get_mut(&date) {
-                        day.clear_hour(hour);
-                    }
-                    cleanup_day(&mut self.state.days, date);
+                    self.clear_hour_note(date, hour)?;
                 } else {
-                    let category = self
-                        .state
-                        .activity(date, hour)
-                        .map(|activity| activity.category())
-                        .unwrap_or(Category::Other);
-                    let mut activity = Activity::new(category);
-                    activity.set_note(draft);
+                    let activity = match self.state.activity(date, hour) {
+                        Some(existing) => {
+                            let mut activity = existing.clone();
+                            activity.set_note(draft);
+                            activity
+                        }
+                        None => Activity::note_only(draft),
+                    };
                     self.store.set_hour(date, hour, &activity)?;
                     ensure_day(&mut self.state.days, date).set_hour(hour, activity);
                 }
@@ -274,12 +293,68 @@ impl Controller {
         Ok(())
     }
 
+    fn clear_hour_if_present(&mut self, date: NaiveDate, hour: u8) -> anyhow::Result<()> {
+        let Some(existing) = self.state.activity(date, hour).cloned() else {
+            return Ok(());
+        };
+        if !existing.has_category() {
+            return Ok(());
+        }
+
+        let mut activity = existing;
+        activity.clear_category();
+        if activity.is_empty() {
+            self.clear_hour(date, hour)
+        } else {
+            self.store.set_hour(date, hour, &activity)?;
+            ensure_day(&mut self.state.days, date).set_hour(hour, activity);
+            Ok(())
+        }
+    }
+
+    fn clear_hour_note(&mut self, date: NaiveDate, hour: u8) -> anyhow::Result<()> {
+        let Some(existing) = self.state.activity(date, hour).cloned() else {
+            return Ok(());
+        };
+        if !existing.has_note() {
+            return Ok(());
+        }
+
+        let mut activity = existing;
+        activity.clear_note();
+        if activity.is_empty() {
+            self.clear_hour(date, hour)?;
+        } else {
+            self.store.set_hour(date, hour, &activity)?;
+            ensure_day(&mut self.state.days, date).set_hour(hour, activity);
+        }
+        Ok(())
+    }
+
     fn clear_day_note(&mut self, date: NaiveDate) -> anyhow::Result<()> {
         self.store.clear_day_note(date)?;
         if let Some(day) = self.state.days.get_mut(&date) {
             day.clear_note();
         }
         cleanup_day(&mut self.state.days, date);
+        Ok(())
+    }
+
+    fn clear_day_note_if_present(&mut self, date: NaiveDate) -> anyhow::Result<()> {
+        let has_note = self.state.day(date).and_then(Day::note).is_some();
+        if !has_note {
+            return Ok(());
+        }
+        self.clear_day_note(date)
+    }
+
+    fn delete_note(&mut self, target: NoteTarget) -> anyhow::Result<()> {
+        match target {
+            NoteTarget::Day { date } => self.clear_day_note_if_present(date)?,
+            NoteTarget::Hour { date, hour } => self.clear_hour_note(date, hour)?,
+        }
+        self.state.overlay = None;
+        self.restore_focus(target);
         Ok(())
     }
 
@@ -309,10 +384,11 @@ fn today() -> NaiveDate {
 fn picker_default_selection(state: &State, target: &NoteTarget) -> CategoryPickerSelection {
     match *target {
         NoteTarget::Day { .. } => CategoryPickerSelection::AddNote,
-        NoteTarget::Hour { date, hour } => state
-            .activity(date, hour)
-            .map(|act| CategoryPickerSelection::Category(act.category()))
-            .unwrap_or(CategoryPickerSelection::Category(Category::Other)),
+        NoteTarget::Hour { date, hour } => match state.activity(date, hour).and_then(Activity::category)
+        {
+            Some(category) => CategoryPickerSelection::Category(category),
+            None => CategoryPickerSelection::AddNote,
+        },
     }
 }
 
@@ -332,41 +408,68 @@ fn note_draft(state: &State, target: &NoteTarget) -> String {
 }
 
 fn move_picker_up(target: &NoteTarget, selected: CategoryPickerSelection) -> CategoryPickerSelection {
-    match *target {
-        NoteTarget::Day { .. } => CategoryPickerSelection::AddNote,
-        NoteTarget::Hour { .. } => match selected {
-            CategoryPickerSelection::Category(category) => {
-                CategoryPickerSelection::Category(prev_category(category))
-            }
-            CategoryPickerSelection::AddNote => CategoryPickerSelection::Category(Category::Other),
-        },
-    }
+    move_picker_by(target, selected, -1)
 }
 
 fn move_picker_down(
     target: &NoteTarget,
     selected: CategoryPickerSelection,
 ) -> CategoryPickerSelection {
-    match *target {
-        NoteTarget::Day { .. } => CategoryPickerSelection::AddNote,
-        NoteTarget::Hour { .. } => match selected {
-            CategoryPickerSelection::Category(Category::Other) => {
-                CategoryPickerSelection::AddNote
-            }
-            CategoryPickerSelection::Category(category) => {
-                CategoryPickerSelection::Category(next_category(category))
-            }
-            CategoryPickerSelection::AddNote => CategoryPickerSelection::AddNote,
-        },
+    move_picker_by(target, selected, 1)
+}
+
+fn move_picker_by(
+    target: &NoteTarget,
+    selected: CategoryPickerSelection,
+    delta: isize,
+) -> CategoryPickerSelection {
+    let current = picker_selection_index(target, selected);
+    let max = picker_selection_count(target).saturating_sub(1) as isize;
+    let next = (current as isize + delta).clamp(0, max) as usize;
+    picker_selection_at(target, next)
+}
+
+fn picker_selection_count(target: &NoteTarget) -> usize {
+    match target {
+        NoteTarget::Day { .. } => 2,
+        NoteTarget::Hour { .. } => Category::ALL.len() + 3,
     }
 }
 
-fn prev_category(category: Category) -> Category {
-    Category::from_u8((category.as_u8() + 9) % 10).unwrap_or(Category::Other)
+fn picker_selection_index(target: &NoteTarget, selected: CategoryPickerSelection) -> usize {
+    match (target, selected) {
+        (NoteTarget::Day { .. }, CategoryPickerSelection::AddNote) => 0,
+        (NoteTarget::Day { .. }, CategoryPickerSelection::DeleteNote) => 1,
+        (NoteTarget::Day { .. }, _) => 0,
+        (NoteTarget::Hour { .. }, CategoryPickerSelection::Category(category)) => {
+            usize::from(category.as_u8())
+        }
+        (NoteTarget::Hour { .. }, CategoryPickerSelection::AddNote) => Category::ALL.len(),
+        (NoteTarget::Hour { .. }, CategoryPickerSelection::DeleteNote) => Category::ALL.len() + 1,
+        (NoteTarget::Hour { .. }, CategoryPickerSelection::DeleteActivity) => {
+            Category::ALL.len() + 2
+        }
+    }
 }
 
-fn next_category(category: Category) -> Category {
-    Category::from_u8((category.as_u8() + 1) % 10).unwrap_or(Category::Sleep)
+fn picker_selection_at(target: &NoteTarget, index: usize) -> CategoryPickerSelection {
+    match target {
+        NoteTarget::Day { .. } => match index {
+            0 => CategoryPickerSelection::AddNote,
+            _ => CategoryPickerSelection::DeleteNote,
+        },
+        NoteTarget::Hour { .. } => {
+            if index < Category::ALL.len() {
+                CategoryPickerSelection::Category(Category::ALL[index])
+            } else {
+                match index - Category::ALL.len() {
+                    0 => CategoryPickerSelection::AddNote,
+                    1 => CategoryPickerSelection::DeleteNote,
+                    _ => CategoryPickerSelection::DeleteActivity,
+                }
+            }
+        }
+    }
 }
 
 fn insert_char(draft: &mut String, cursor: &mut usize, c: char) {
