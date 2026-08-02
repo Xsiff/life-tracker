@@ -12,7 +12,6 @@ pub enum Action {
     Erase,
     Tick,
 }
-
 #[cfg(test)]
 mod tests {
     use super::Action;
