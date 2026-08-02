@@ -41,7 +41,7 @@ impl Store {
 CREATE TABLE IF NOT EXISTS activities (
     date     TEXT    NOT NULL,   -- ISO date, e.g. 2026-08-02
     hour     INTEGER NOT NULL,   -- 0..23
-    category TEXT    NOT NULL,
+    category TEXT    NOT NULL,   -- empty string means "note-only hour"
     note     TEXT,               -- optional per-hour note
     PRIMARY KEY (date, hour)
 );
@@ -53,7 +53,8 @@ CREATE TABLE IF NOT EXISTS day_notes (
 );
 ```
 
-- **`set_hour`** → `INSERT OR REPLACE` the `(date, hour)` row (category + optional note).
+- **`set_hour`** → `INSERT OR REPLACE` the `(date, hour)` row (optional category
+  encoded as category text or `""`, plus optional note).
 - **`clear_hour`** → `DELETE` the `(date, hour)` row.
 - **`set_day_note`** → `INSERT OR REPLACE` the `day_notes(date)` row.
 - **`clear_day_note`** → `DELETE` the `day_notes(date)` row.

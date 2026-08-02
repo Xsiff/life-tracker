@@ -17,18 +17,19 @@ one month-grouped matrix:
    once.
 2. **Popup editing** — pressing enter on a focused cell opens a popup for that
    slot. The popup lets the user choose a category by number/color, with a final
-   `[+] add note` action that routes into the note editor for the same hour.
-   If focus is on the date label instead of an hour, enter opens a day-level
-   popup that exposes only `[+] add note`. Notes are edited in a text popup and
-   show a visible `|` cursor at the current text position; `Shift+Enter`
-   inserts a newline when the terminal reports it distinctly, and `Ctrl+J`
-   is supported as the reliable fallback; noted cells show `*` in the matrix.
-   A boxed palette pane explains the
-   number-to-category mapping.
+   `[+] add note` action that routes into the note editor for the same hour,
+   plus delete actions for note/category removal. If focus is on the date label
+   instead of an hour, enter opens a day-level popup that exposes note actions
+   only (`[+] add note`, `[x] delete note`). Notes are edited in a text popup
+   and show a visible `|` cursor at the current text position; `Shift+Enter`
+   inserts a newline when the terminal reports it distinctly, and `Ctrl+J` is
+   supported as the reliable fallback; noted cells show `*` in the matrix. A
+   boxed palette pane explains the number-to-category mapping.
 
 **Domain model:**
 - **Category** — a fixed set of 10 activity types (Sleep, Health, Friends/Family, Romantic, Work, Waste, Travel, Hobbies/Skills, Relaxation, Other). Categories are the palette for filling hours.
-- Each hour cell holds one categorized activity (a category plus optional specifics).
+- Each hour cell may hold a category, a note, or both. This lets note deletion
+  and activity deletion remain independent.
 
 Keep this single matrix + popup editing structure and the category-driven fill
 model in mind; it's the core of the app and not obvious from filenames once code
@@ -117,7 +118,7 @@ life-tracker/
 │   │   ├── AGENTS.md
 │   │   ├── mod.rs
 │   │   ├── category.rs      # Category (fixed palette, 0..9)
-│   │   ├── activity.rs      # Activity = category + optional note
+│   │   ├── activity.rs      # Activity = optional category + optional note
 │   │   ├── calendar.rs      # Day, Week, hour-slot model + indexing, week-window math
 │   │   └── action.rs        # Action (neutral IR-style input → controller contract)
 │   ├── input/               # keyboard/tick → Action

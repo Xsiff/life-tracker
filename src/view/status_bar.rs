@@ -45,10 +45,14 @@ fn focus_text(state: &State) -> String {
         Some(hour) => match state.activity(state.cursor.date, hour) {
             Some(activity) => {
                 let note = if activity.has_note() { " *" } else { "" };
+                let label = activity
+                    .category()
+                    .map(|category| category.label())
+                    .unwrap_or("No activity");
                 format!(
                     "Focus: {} {hour:02}.00 {}{note}",
                     state.cursor.date.format("%d.%m.%Y"),
-                    activity.category().label()
+                    label
                 )
             }
             None => format!(

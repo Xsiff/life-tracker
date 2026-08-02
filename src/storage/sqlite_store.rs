@@ -41,10 +41,17 @@ impl Store {
             let (date, hour, category, note) = row?;
             let date = parse_date(&date)?;
             let hour = u8::try_from(hour).context("invalid hour")?;
-            let category = category.parse::<Category>().map_err(|err| anyhow::anyhow!(err))?;
-            let mut activity = Activity::new(category);
-            if let Some(note) = note {
-                activity.set_note(note);
+            let activity = if category.is_empty() {
+                Activity::note_only(note.unwrap_or_default())
+            } else {
+                let category = category.parse::<Category>().map_err(|err| anyhow::anyhow!(err))?;
+                match note {
+                    Some(note) => Activity::with_note(category, note),
+                    None => Activity::new(category),
+                }
+            };
+            if activity.is_empty() {
+                continue;
             }
             days.entry(date).or_insert_with(|| Day::new(date)).set_hour(hour, activity);
         }
@@ -70,7 +77,12 @@ impl Store {
     pub fn set_hour(&self, date: NaiveDate, hour: u8, act: &Activity) -> anyhow::Result<()> {
         self.conn.execute(
             "INSERT OR REPLACE INTO activities(date, hour, category, note) VALUES (?1, ?2, ?3, ?4)",
-            params![date.to_string(), i64::from(hour), act.category().label(), act.note()],
+            params![
+                date.to_string(),
+                i64::from(hour),
+                act.category().map(Category::label).unwrap_or(""),
+                act.note()
+            ],
         )?;
         Ok(())
     }

@@ -191,14 +191,22 @@ fn cell_content(
 ) -> (String, Style) {
     let label = match activity {
         Some(activity) => {
-            let note = if activity.has_note() { "*" } else { " " };
-            format!(" {}{}", activity.category().digit(), note)
+            match activity.category() {
+                Some(category) => {
+                    let note = if activity.has_note() { "*" } else { " " };
+                    format!(" {}{}", category.digit(), note)
+                }
+                None => " *".to_string(),
+            }
         }
         None => " ·".to_string(),
     };
 
     let base = match activity {
-        Some(activity) => theme::cell_style(activity.category()),
+        Some(activity) => match activity.category() {
+            Some(category) => theme::cell_style(category),
+            None => theme::empty_style(),
+        },
         None => theme::empty_style(),
     };
 

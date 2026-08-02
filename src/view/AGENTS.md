@@ -35,9 +35,10 @@ copy.
   date/hour window is derived from the actual terminal size and centered around
   the focused cell.
 - **`category_picker.rs`** — popup list driven by `NoteTarget`. For an hour
-  target it shows one row per `Category` in its own color plus a final
-  `[+] add note` action. For a day target it renders only the `[+] add note`
-  row. The selected row is highlighted either way.
+  target it shows one row per `Category` in its own color plus action rows for
+  `[+] add note`, `[x] delete note`, and `[x] delete activity`. For a day
+  target it renders only `[+] add note` and `[x] delete note`. The selected row
+  is highlighted either way.
 - **`note_editor.rs`** — popup text box showing the `NoteEditor` draft + text
   cursor; title reflects the `NoteTarget` (day or hour). The current cursor
   position is rendered visibly as `|`. `Shift+Enter` inserts a line break when

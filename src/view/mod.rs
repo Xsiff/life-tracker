@@ -87,7 +87,7 @@ fn overlay_rect(area: Rect, overlay: &Overlay) -> Rect {
     let (width, height) = match overlay {
         Overlay::CategoryPicker { target, .. } => match target {
             NoteTarget::Day { .. } => (30, 6),
-            NoteTarget::Hour { .. } => (30, 15),
+            NoteTarget::Hour { .. } => (30, 17),
         },
         Overlay::NoteEditor { .. } => (30, 8),
     };
@@ -322,6 +322,8 @@ mod tests {
         assert!(output.contains("Set activity - 13.00"));
         assert!(output.contains("> 0 Sleep"));
         assert!(output.contains("  [+] add note"));
+        assert!(output.contains("  [x] delete note"));
+        assert!(output.contains("  [x] delete activity"));
         assert!(output.contains("9 Other"));
     }
 
@@ -371,7 +373,31 @@ mod tests {
         let output = render_to_string(&state, 80, 24);
         assert!(output.contains("Day - 02.08.2026"));
         assert!(output.contains("> [+] add note"));
+        assert!(output.contains("  [x] delete note"));
         assert!(output.contains("Focus: 02.08.2026 Day"));
+    }
+
+    #[test]
+    fn renders_note_only_hour_focus() {
+        let mut days = BTreeMap::new();
+        let mut day = Day::new(date(2026, 8, 2));
+        day.set_hour(13, Activity::note_only("kept after deleting activity"));
+        days.insert(day.date(), day);
+
+        let state = State {
+            view: ViewMode::Calendar,
+            cursor: Cursor {
+                date: date(2026, 8, 2),
+                hour: Some(13),
+            },
+            overlay: None,
+            days,
+            last_error: None,
+            quit: false,
+        };
+
+        let output = render_to_string(&state, 120, 24);
+        assert!(output.contains("Focus: 02.08.2026 13.00 No activity *"));
     }
 
     #[test]

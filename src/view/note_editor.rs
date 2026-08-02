@@ -39,7 +39,10 @@ fn title(state: &State, target: &NoteTarget) -> String {
     match target {
         NoteTarget::Day { date } => format!(" Note - {} ", date.format("%a, %b %-d %Y")),
         NoteTarget::Hour { date, hour } => match state.activity(*date, *hour) {
-            Some(activity) => format!(" Note - {hour:02}:00 {} ", activity.category().label()),
+            Some(activity) => match activity.category() {
+                Some(category) => format!(" Note - {hour:02}:00 {} ", category.label()),
+                None => format!(" Note - {hour:02}:00 "),
+            },
             None => format!(" Note - {hour:02}:00 "),
         },
     }
