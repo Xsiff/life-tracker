@@ -1,4 +1,5 @@
 mod app;
+mod controller;
 mod domain;
 mod event;
 mod storage;
