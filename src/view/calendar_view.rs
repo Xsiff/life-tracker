@@ -11,7 +11,7 @@ use crate::{controller::State, domain::Category};
 
 use super::theme;
 
-const DATE_WIDTH: usize = 12;
+const DATE_WIDTH: usize = 16;
 const HOUR_CONTENT_WIDTH: usize = 5;
 const MIN_VISIBLE_DATE_ROWS: usize = 4;
 const MIN_VISIBLE_HOURS: usize = 4;
@@ -93,11 +93,13 @@ fn build_day_line(
 ) -> Line<'static> {
     let day_has_note = state.day(date).and_then(|d| d.note()).is_some();
     let date_format = date.format("%d.%m.%Y").to_string();
+    let weekday = date.format("%a").to_string();
     let date_label = if day_has_note {
-        let combined = format!("{}*", date_format);
+        let combined = format!("{} {}*", date_format, weekday);
         format!("{:<DATE_WIDTH$}│", combined)
     } else {
-        format!("{:<DATE_WIDTH$}│", date_format)
+        let combined = format!("{} {}", date_format, weekday);
+        format!("{:<DATE_WIDTH$}│", combined)
     };
     let mut spans = vec![Span::styled(
         date_label,

@@ -28,16 +28,17 @@ copy.
 - **`calendar_view.rs`** — the main matrix: columns are `00.00..23.00`, rows are
   sequential dates, and month headers split the timeline into readable blocks.
   Each populated hour cell shows the category digit in its category color; noted
-  cells add `*`. A day with a day-level note shows a single `*` appended to the
-  date label in the left column (e.g., `02.08.2026*│`), not on hour cells. The
-  date column is focusable and represents whole-day actions when `cursor.hour` is
-  `None`. The date column receives the selection highlight only when the day
-  itself is focused (`hour = None`); when any hour within the day is focused
-  (`hour = Some(_)`), the date column stays unhighlighted. The matrix uses
-  visible vertical separators per hour column and horizontal rules between rows
-  so it reads like a table. Month boundaries are emphasized with a stronger `═`
-  separator. The visible date/hour window is derived from the actual terminal
-  size and centered around the focused cell.
+  cells add `*`. The date column shows the date with an abbreviated weekday
+  (e.g., `02.08.2026 Sat`), with a single `*` appended after the weekday when the
+  day has a day-level note (e.g., `02.08.2026 Sat*│`). The date column is
+  focusable and represents whole-day actions when `cursor.hour` is `None`. The
+  date column receives the selection highlight only when the day itself is
+  focused (`hour = None`); when any hour within the day is focused (`hour =
+  Some(_)`), the date column stays unhighlighted. The matrix uses visible vertical
+  separators per hour column and horizontal rules between rows so it reads like a
+  table. Month boundaries are emphasized with a stronger `═` separator. The
+  visible date/hour window is derived from the actual terminal size and centered
+  around the focused cell.
 - **`category_picker.rs`** — popup list driven by `NoteTarget`. For an hour
   target it shows one row per `Category` in its own color plus action rows for
   `[+] add note`, `[x] delete note`, and `[x] delete activity`. For a day
@@ -62,7 +63,7 @@ copy.
   always exposes exactly 24 slots (`00`–`23`) even across DST.
 - **Current focus.** The status bar shows the focused slot, e.g.
   `Focus: 02.08.2026 13.00 Work *` or `Focus: 02.08.2026 Day *`.
-- **Note markers.** A cell with an hour-level note is flagged with `*` inside that cell. A day with a day-level note shows a single `*` appended to the date label in the left column (e.g., `02.08.2026*│`). Hour slots for that day do **not** show `*` unless they individually have hour-level notes.
+- **Note markers.** A cell with an hour-level note is flagged with `*` inside that cell. A day with a day-level note shows a single `*` appended after the weekday abbreviation in the date column (e.g., `02.08.2026 Sat*│`). Hour slots for that day do **not** show `*` unless they individually have hour-level notes.
 - **Legend palette.** The matrix view reserves a dedicated right-side pane for a
   boxed subtable showing every category number and color mapping so the numeric
   cells remain readable.
