@@ -29,11 +29,13 @@ copy.
   sequential dates, and month headers split the timeline into readable blocks.
   Each populated hour cell shows the category digit in its category color; noted
   cells add `*`. The date column is focusable and represents whole-day actions
-  when `cursor.hour` is `None`. The matrix uses visible vertical separators per
-  hour column and horizontal rules between rows so it reads like a table. Month
-  boundaries are emphasized with a stronger `═` separator. The visible
-  date/hour window is derived from the actual terminal size and centered around
-  the focused cell.
+  when `cursor.hour` is `None`. The date column receives the selection highlight
+  only when the day itself is focused (`hour = None`); when any hour within the
+  day is focused (`hour = Some(_)`), the date column stays unhighlighted. The
+  matrix uses visible vertical separators per hour column and horizontal rules
+  between rows so it reads like a table. Month boundaries are emphasized with a
+  stronger `═` separator. The visible date/hour window is derived from the actual
+  terminal size and centered around the focused cell.
 - **`category_picker.rs`** — popup list driven by `NoteTarget`. For an hour
   target it shows one row per `Category` in its own color plus action rows for
   `[+] add note`, `[x] delete note`, and `[x] delete activity`. For a day

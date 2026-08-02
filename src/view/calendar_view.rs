@@ -91,10 +91,15 @@ fn build_day_line(
     now: &chrono::DateTime<Local>,
     hours: &[u8],
 ) -> Line<'static> {
-    let mut spans = vec![Span::styled(
-        format!("{:<DATE_WIDTH$}│", date.format("%d.%m.%Y")),
-        date_style(date, state.cursor.date, now.date_naive()),
-    )];
+        let mut spans = vec![Span::styled(
+            format!("{:<DATE_WIDTH$}│", date.format("%d.%m.%Y")),
+            date_style(
+                date,
+                state.cursor.date,
+                now.date_naive(),
+                state.cursor.hour.is_none(),
+            ),
+        )];
 
     for hour in hours {
         let activity = state.activity(date, *hour);
@@ -174,8 +179,13 @@ fn visible_hours(center: u8, count: usize) -> Vec<u8> {
     (start..start + count).map(|hour| hour as u8).collect()
 }
 
-fn date_style(date: NaiveDate, selected: NaiveDate, today: NaiveDate) -> Style {
-    if date == selected {
+fn date_style(
+    date: NaiveDate,
+    selected: NaiveDate,
+    today: NaiveDate,
+    hour_focus: bool,
+) -> Style {
+    if date == selected && hour_focus {
         theme::selected(Style::default())
     } else if date == today {
         theme::now_cell(Style::default())
