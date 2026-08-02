@@ -1,4 +1,4 @@
-.PHONY: format format-check check lint test verify pre-commit-install
+.PHONY: format format-check check lint test verify pre-commit-install pre-commit
 
 format:
 	cargo fmt --all
@@ -18,4 +18,7 @@ test:
 verify: format-check check lint test
 
 pre-commit-install:
-	pre-commit install
+	uv run pre-commit install
+
+pre-commit:
+	uv run pre-commit run --all-files
