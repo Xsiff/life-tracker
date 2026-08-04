@@ -210,7 +210,6 @@ mod tests {
         days.insert(date(2026, 8, 1), Day::new(date(2026, 8, 1)));
 
         let state = State {
-            view: ViewMode::Calendar,
             cursor: Cursor {
                 date: date(2026, 8, 1),
                 hour: Some(0),
@@ -378,6 +377,39 @@ mod tests {
         assert!(output.contains("Note - 13:00 Work"));
         assert!(output.contains("Sprint planning, blocked"));
         assert!(output.contains("on API keys.|"));
+    }
+
+    #[test]
+    fn wraps_long_note_editor_text_within_popup() {
+        let mut days = BTreeMap::new();
+        let day_date = date(2026, 8, 2);
+        let mut day = Day::new(day_date);
+        day.set_hour(13, Activity::new(Category::Work));
+        days.insert(day_date, day);
+
+        let state = State {
+            cursor: Cursor {
+                date: date(2026, 8, 2),
+                hour: Some(13),
+            },
+            overlay: Some(Overlay::NoteEditor {
+                target: NoteTarget::Hour {
+                    date: date(2026, 8, 2),
+                    hour: 13,
+                },
+                draft: "This is a deliberately long note without spaces to force wrapping".to_string(),
+                cursor: 65,
+            }),
+            days,
+            last_error: None,
+            quit: false,
+        };
+
+        let output = render_to_string(&state, 46, 16);
+        let long_note = "This is a deliberately long note without spaces to force wrapping";
+        assert!(!output.contains(long_note));
+        assert!(output.lines().any(|line| line.contains("This is a deliberately")));
+        assert!(output.lines().any(|line| line.contains("wrapping")));
     }
 
     fn render_to_string(state: &State, width: u16, height: u16) -> String {
