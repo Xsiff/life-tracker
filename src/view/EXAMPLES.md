@@ -70,7 +70,9 @@ Legend:
 - The real current `(date, hour)` cell gets the "now" highlight when it is not
   also the focused cell.
 - Vertical separators, per-row `─` rules, and stronger month `═` separators are
-  part of the intended appearance, not incidental spacing.
+  part of the intended appearance, not incidental spacing. Month headers are
+  followed by `═`, and the final day of a month also transitions directly to
+  `═`; there is no extra weak rule before the month break.
 - The visible hour columns shown above are only the current horizontal viewport;
   moving left/right shifts that hour window around the focused hour.
 - The category picker and note editor are positioned next to the active cell

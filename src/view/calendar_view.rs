@@ -84,11 +84,8 @@ fn build_grid_lines(
     lines.push(Line::raw(build_rule_line('─', '┼', visible_hours.len())));
 
     let mut active_month = None;
-    for date in visible_dates {
+    for (idx, date) in visible_dates.iter().enumerate() {
         if active_month != Some((date.year(), date.month())) {
-            if active_month.is_some() {
-                lines.push(Line::raw(build_rule_line('═', '╪', visible_hours.len())));
-            }
             active_month = Some((date.year(), date.month()));
             lines.push(Line::from(Span::styled(
                 format!("**{} {}**", date.format("%B"), date.year()),
@@ -96,8 +93,15 @@ fn build_grid_lines(
             )));
             lines.push(Line::raw(build_rule_line('═', '╪', visible_hours.len())));
         }
-        lines.push(build_day_line(state, date, now, &visible_hours));
-        lines.push(Line::raw(build_rule_line('─', '┼', visible_hours.len())));
+        lines.push(build_day_line(state, *date, now, &visible_hours));
+
+        let separator = match visible_dates.get(idx + 1) {
+            Some(next) if (next.year(), next.month()) != (date.year(), date.month()) => {
+                build_rule_line('═', '╪', visible_hours.len())
+            }
+            _ => build_rule_line('─', '┼', visible_hours.len()),
+        };
+        lines.push(Line::raw(separator));
     }
 
     lines
@@ -185,9 +189,6 @@ fn focused_date_row_y(visible_dates: &[NaiveDate], date: NaiveDate) -> Option<u1
 
     for current in visible_dates {
         if active_month != Some((current.year(), current.month())) {
-            if active_month.is_some() {
-                row_y = row_y.saturating_add(1);
-            }
             active_month = Some((current.year(), current.month()));
             row_y = row_y.saturating_add(2);
         }

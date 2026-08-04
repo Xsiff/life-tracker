@@ -204,6 +204,42 @@ mod tests {
     }
 
     #[test]
+    fn renders_strong_separator_at_month_boundary() {
+        let mut days = BTreeMap::new();
+        days.insert(date(2026, 7, 31), Day::new(date(2026, 7, 31)));
+        days.insert(date(2026, 8, 1), Day::new(date(2026, 8, 1)));
+
+        let state = State {
+            view: ViewMode::Calendar,
+            cursor: Cursor {
+                date: date(2026, 8, 1),
+                hour: Some(0),
+            },
+            overlay: None,
+            days,
+            last_error: None,
+            quit: false,
+        };
+
+        let output = render_to_string(&state, 160, 32);
+        let lines: Vec<_> = output.lines().collect();
+        let july_row = lines
+            .iter()
+            .position(|line| line.contains("31.07.2026"))
+            .expect("july row");
+        let separator = lines.get(july_row + 1).expect("separator after july row");
+        let august_header = lines
+            .iter()
+            .position(|line| line.contains("**August 2026**"))
+            .expect("august header");
+        let after_header = lines.get(august_header + 1).expect("line after header");
+
+        assert!(separator.contains('═'));
+        assert!(!separator.contains('─'));
+        assert!(after_header.contains('═'));
+    }
+
+    #[test]
     fn renders_matrix_focus_line() {
         let mut state = matrix_state(None);
         state.last_error = None;
