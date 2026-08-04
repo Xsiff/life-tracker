@@ -1,32 +1,48 @@
 # life-tracker
 
-## Development tooling
+Terminal life tracker in Rust. It stores each day as a row and each hour as a
+column, so you can log categories, attach notes, and edit entries directly from
+a spreadsheet-like TUI.
 
-The repository uses `uv` to manage the Python-based pre-commit executable; the
-application itself remains Rust-based.
+## What It Does
 
-```sh
-uv sync --dev
-make pre-commit-install
-make pre-commit
-```
+- Shows a month-grouped matrix where rows are dates and columns are hours
+  `00..23`.
+- Lets you focus either an hour cell or the date label for whole-day actions.
+- Opens a popup on `Enter` to set a category, add a note, delete a note, or
+  delete an activity.
+- Supports hour-level notes and day-level notes. Notes are marked with `*`.
+- Stores data locally in SQLite. No account and no network are required.
 
-A terminal (TUI) life-tracker written in Rust. Log how you spend each hour of your day using a fixed palette of activity categories, and see your weeks at a glance in a calendar grid.
+Each hour slot can hold a category, a note, or both. Deleting a category does
+not delete the note, and deleting a note does not delete the category.
 
-## Features
+## Current UI Model
 
-- **Calendar view** — a grid of weeks (columns) by days of the week (rows). Each cell summarizes how full that day is.
-- **Day view** — drill into any day to see all 24 hours, one cell per hour.
-- **Category-driven logging** — fill each hour with an activity drawn from a fixed set of 10 categories (Sleep, Health, Friends/Family, Romantic, Work, Waste, Travel, Hobbies/Skills, Relaxation, Other), with an optional note.
-- **Color-coded at a glance** — every category has its own fixed color, used consistently across the calendar cells, day view, and category picker so you can read your week without labels.
-- **Live "now" indicator** — a status bar shows the current date and hour and highlights the matching cell, alongside your current focus (the selected day/hour and its activity).
-- **Notes on days and hours** — attach a free-text note to any hour or to a whole day via a popup editor; noted cells are flagged with a `*` marker.
-- **Switchable views** — cycle between views (calendar and day views, with room for week/agenda/stats later) with a single key.
-- **Local persistence** — everything is stored locally in a single SQLite database; no account or network required.
+The app no longer uses a calendar screen plus a separate day screen. The active
+UI is a single matrix view with popup editing:
+
+- The main screen is a scrolling date x hour table with month separators.
+- The left date column is focusable and represents day-level actions.
+- The popup editor is context-sensitive:
+  - On an hour cell, it offers categories `0..9`, `add note`, `delete note`,
+    and `delete activity`.
+  - On a date label, it offers `add note` and `delete note`.
+- The note editor supports a visible text cursor, `Backspace`, save on `Enter`,
+  cancel on `Esc`, and newline insertion via `Shift+Enter` when available or
+  `Ctrl+J` as the reliable fallback.
+
+## Categories
+
+The fixed category palette is:
+
+`0` Sleep, `1` Health, `2` Friends/Family, `3` Romantic, `4` Work,
+`5` Waste, `6` Travel, `7` Hobbies/Skills, `8` Relaxation, `9` Other
 
 ## Installation
 
-Requires a Rust toolchain (edition 2021 or later). No system SQLite is needed — it is bundled.
+Requires a Rust toolchain. SQLite is bundled through `rusqlite`, so no system
+SQLite install is needed.
 
 ```bash
 git clone git@xsiff:Xsiff/life-tracker.git
@@ -34,41 +50,71 @@ cd life-tracker
 cargo build --release
 ```
 
-## Usage
+## Running
 
 ```bash
 cargo run --release
 ```
 
-The app opens on the calendar view. Navigate to a day, open it, and fill in your hours.
+## Keybindings
 
-### Keybindings
+### Matrix
 
-| Screen   | Key          | Action               |
-|----------|--------------|----------------------|
-| Calendar | arrows       | move selection       |
-| Calendar | Enter        | open day             |
-| Calendar | N            | edit day note        |
-| Calendar | v / Tab      | switch view          |
-| Calendar | q            | quit                 |
-| Day      | ↑/↓          | move hour            |
-| Day      | Enter        | open category picker |
-| Day      | x            | clear hour           |
-| Day      | n            | edit hour note       |
-| Day      | v / Tab      | switch view          |
-| Day      | Esc          | back to calendar     |
-| Picker   | 0–9 / arrows | choose category      |
-| Picker   | Enter / Esc  | confirm / cancel     |
-| Note     | text / ⌫     | edit note text       |
-| Note     | Enter / Esc  | save / cancel        |
+| Key | Action |
+|---|---|
+| `←` / `→` | Move across the focused row |
+| `↑` / `↓` | Move across dates |
+| `Enter` | Open the popup for the focused target |
+| `n` / `N` | Open note editor for the focused target |
+| `x` / `X` | Clear the focused value |
+| `q` / `Q` | Quit |
+| `Tab` | Reserved `CycleView` action; currently no visible mode switch |
 
-## Data storage
+`MoveLeft` from hour `00` lands on the date label. `MoveRight` from the date
+label enters hour `00`. `MoveRight` from hour `23` advances to the next date at
+hour `00`.
 
-Activities are saved to a single SQLite file (`life-tracker.db`) in your platform's data directory (resolved via [`directories`](https://crates.io/crates/directories)). Each filled hour is one row, day notes are stored separately, and changes are written immediately as you edit.
+### Category Popup
+
+| Key | Action |
+|---|---|
+| `↑` / `↓` | Move selection |
+| `0`-`9` | Jump to a category row on hour targets |
+| `Enter` | Confirm selected row |
+| `Esc` | Cancel |
+
+### Note Editor
+
+| Key | Action |
+|---|---|
+| text input | Insert text |
+| `Backspace` | Erase one character before the cursor |
+| `Enter` | Save |
+| `Esc` | Cancel |
+| `Shift+Enter` | Insert newline when the terminal reports it distinctly |
+| `Ctrl+J` | Insert newline reliably |
+
+## Data Storage
+
+Data is stored in a local SQLite database in the platform data directory
+resolved via `directories`.
+
+- Hour entries are persisted per `(date, hour)`.
+- Day notes are stored separately from hour entries.
+- Writes happen immediately through the controller's persist-then-commit flow.
 
 ## Development
 
-See [`AGENTS.md`](AGENTS.md) for the full system design: module layout, domain model, persistence schema, screen state machine, view modes, status bar, and UI mockups.
+The repository includes some Python-based tooling through `uv`, while the app
+itself is Rust.
+
+```bash
+uv sync --dev
+make pre-commit-install
+make pre-commit
+```
+
+For the app itself:
 
 ```bash
 cargo build
@@ -77,6 +123,4 @@ cargo run
 cargo clippy
 ```
 
-## License
-
-See [`LICENSE`](LICENSE).
+For the detailed architecture and module contracts, see [AGENTS.md](AGENTS.md).
