@@ -11,10 +11,11 @@ one month-grouped matrix:
    uses visible grid separators so dates and hours read as a real spreadsheet.
    The left date column is also a focusable target: when focus is on the date
    label, actions apply to the whole day rather than a single hour.
-   Ordinary date rows are separated by horizontal `─` rules; month boundaries use
-   stronger `═` separators. The visible viewport follows the focused cell both
-   vertically and horizontally when the terminal cannot show every date/hour at
-   once.
+   Ordinary date rows are separated by horizontal `─` rules; month headers are
+   followed by a stronger `═` separator, and the final day of a month also
+   transitions directly to a stronger `═` separator before the next month
+   header. The visible viewport follows the focused cell both vertically and
+   horizontally when the terminal cannot show every date/hour at once.
 2. **Popup editing** — pressing enter on a focused cell opens a popup for that
    slot. The popup lets the user choose a category by number/color, with a final
    `[+] add note` action that routes into the note editor for the same hour,
