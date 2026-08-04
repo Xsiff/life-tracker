@@ -100,7 +100,7 @@ fn build_day_line(
         format!("{} {}", date_format, weekday)
     };
     let date_text = Span::styled(
-        format!("{:>16}", combined),
+        format!("{:^16}", combined),
         date_style(
             date,
             state.cursor.date,
