@@ -15,8 +15,9 @@ if present:
 
 1. Draw the base matrix view from `calendar_view.rs`.
 2. Draw the persistent status bar (`status_bar.rs`) across every view.
-3. If `state.overlay.is_some()`, draw the overlay popup over the base
-   (`category_picker.rs` or `note_editor.rs`); the base stays visible underneath.
+3. If `state.overlay.is_some()`, draw the overlay popup anchored to the focused
+   cell over the base (`category_picker.rs` or `note_editor.rs`); the base stays
+   visible underneath.
 
 Each base view reads the shared `Cursor` for selection and never keeps its own
 copy.
@@ -43,12 +44,14 @@ copy.
   target it shows one row per `Category` in its own color plus action rows for
   `[+] add note`, `[x] delete note`, and `[x] delete activity`. For a day
   target it renders only `[+] add note` and `[x] delete note`. The selected row
-  is highlighted either way.
+  is highlighted either way. The popup is positioned next to the focused cell
+  when space allows, then flips or clamps to stay visible.
 - **`note_editor.rs`** — popup text box showing the `NoteEditor` draft + text
   cursor; title reflects the `NoteTarget` (day or hour). The current cursor
   position is rendered visibly as `|`. `Shift+Enter` inserts a line break when
   the terminal reports it distinctly, `Ctrl+J` is the reliable fallback, and
-  plain `Enter` still saves.
+  plain `Enter` still saves. Like the picker, it anchors to the active cell
+  instead of centering on the screen.
 - **`status_bar.rs`** — shared "now" indicator + current focused slot line.
 - **`theme.rs`** — the single source of category colors:
   `fn color(category: Category) -> ratatui::style::Color`. Every screen pulls

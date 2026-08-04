@@ -4,7 +4,9 @@ Concrete `State` → rendered-output pairs for the current matrix frontend. Each
 example shows the relevant slice of `State` and the ASCII the view produces from
 it. Colors cannot render in markdown, so the examples describe where category,
 focus, and "now" highlights appear. The matrix is scrollable in both axes around
-the focused cell; the examples below show only the visible viewport.
+the focused cell; the examples below show only the visible viewport. Popup
+overlays are anchored beside the focused cell and flip or clamp to stay on
+screen, so the exact side can vary with terminal size.
 
 The "now" indicator in every example assumes a live clock reading of
 `02.08.2026 · 13:47` at render time (never taken from `State`).
@@ -47,12 +49,12 @@ Output:
 │══════════════╪═════╪═════╪═════╪═════╪═════╪═════╪═════╪═════╪│6 = Travel            │         │
 │ 01.08.2026 Fri  │ ·   │ ·   │ ·   │ ·   │ ·   │ ·   │ ·   │ ·   ││7 = Hobbies/Skills    │         │
 │──────────────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼│8 = Relaxation        │         │
-│ 02.08.2026 Sat* │ 4   │ 4   │ 1   │ 4*  │ 4   │ ·   │ 8   │ 7   ││9 = Other             │         │
+│ 02.08.2026 Sun* │ 4   │ 4   │ 1   │ 4*  │ 4   │ ·   │ 8   │ 7   ││9 = Other             │         │
 │──────────────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼└──────────────────────┘         │
 │ 03.08.2026 Sun  │ ·   │ ·   │ ·   │ ·   │ ·   │ ·   │ ·   │ ·   │                                  │
 │──────────────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼                                  │
 ├────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ now 02.08.2026 Sat · 13:47   Focus: 02.08.2026 Sat 13.00 Work *                                  │
+│ now 02.08.2026 Sun · 13:47   Focus: 02.08.2026 Sun 13.00 Work *                                  │
 │ ←↑↓→ move  ⏎ open  n note  x clear  q quit                                                      │
 └────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -61,9 +63,9 @@ Legend:
 - Each occupied cell shows the category digit in its category color.
 - A noted cell appends `*`, e.g. `4*`. A day with a day-level note shows `*`
   appended after the weekday abbreviation in the date column (e.g.,
-  `02.08.2026 Sat*│`), not on hour cells.
+  `02.08.2026 Sun*│`), not on hour cells.
 - The date column shows the date with an abbreviated weekday (e.g.,
-  `02.08.2026 Sat`).
+  `02.08.2026 Sun`).
 - The focused cell gets the selection highlight.
 - The real current `(date, hour)` cell gets the "now" highlight when it is not
   also the focused cell.
@@ -71,6 +73,8 @@ Legend:
   part of the intended appearance, not incidental spacing.
 - The visible hour columns shown above are only the current horizontal viewport;
   moving left/right shifts that hour window around the focused hour.
+- The category picker and note editor are positioned next to the active cell
+  rather than centered.
 
 ## 2. Category picker overlay
 
@@ -113,6 +117,8 @@ Legend:
   existing note.
 - The add-note row is part of the picker selection model, so it can be focused
   and confirmed just like the category and delete rows.
+- The popup is anchored beside the focused cell and will move left or up if
+  there is not enough room on the right or below.
 
 ## 3. Day note picker
 
@@ -143,6 +149,7 @@ Legend:
 - Day focus means actions apply to the whole day, not an hour slot.
 - Pressing `Enter` on a day focus opens this picker, which intentionally exposes
   only note actions.
+- The popup is anchored beside the date cell and clamped to remain visible.
 
 ## 4. Note editor overlay
 
@@ -176,6 +183,7 @@ Legend:
   past the end of the draft, it is clamped to the end of the text.
 - `Shift+Enter` inserts a new line at the cursor when the terminal reports it
   distinctly; `Ctrl+J` is the reliable fallback. Plain `Enter` saves.
+- The editor is anchored beside the focused cell instead of being centered.
 
 The matrix is the only base screen now. Editing happens by focusing an hour cell
 and opening one of the two popup overlays above.

@@ -60,11 +60,12 @@ fn render_with_now(frame: &mut Frame, state: &State, now: &DateTime<Local>) {
         .constraints([Constraint::Min(0), Constraint::Length(2)])
         .split(inner);
 
-    calendar_view::render(frame, sections[0], state, now);
+    let matrix_area = sections[0];
+    calendar_view::render(frame, matrix_area, state, now);
     status_bar::render(frame, sections[1], state, now);
 
     if let Some(overlay) = &state.overlay {
-        render_overlay(frame, state, overlay, overlay_rect(area, overlay));
+        render_overlay(frame, state, overlay, overlay_rect(matrix_area, overlay));
     }
 }
 
@@ -91,7 +92,22 @@ fn overlay_rect(area: Rect, overlay: &Overlay) -> Rect {
         },
         Overlay::NoteEditor { .. } => (30, 8),
     };
-    centered_rect(area, width.min(area.width), height.min(area.height))
+
+    let width = width.min(area.width);
+    let height = height.min(area.height);
+    let anchor = match overlay {
+        Overlay::CategoryPicker { target, .. } => {
+            calendar_view::focused_cell_rect(area, target)
+        }
+        Overlay::NoteEditor { target, .. } => {
+            calendar_view::focused_cell_rect(area, target)
+        }
+    };
+
+    match anchor {
+        Some(anchor) => anchored_rect(area, anchor, width, height),
+        None => centered_rect(area, width, height),
+    }
 }
 
 fn centered_rect(area: Rect, width: u16, height: u16) -> Rect {
@@ -101,6 +117,27 @@ fn centered_rect(area: Rect, width: u16, height: u16) -> Rect {
         width,
         height,
     }
+}
+
+fn anchored_rect(area: Rect, anchor: Rect, width: u16, height: u16) -> Rect {
+    let right_space = area.x.saturating_add(area.width);
+    let anchor_right = anchor.x.saturating_add(anchor.width);
+    let x = if anchor_right.saturating_add(1).saturating_add(width) <= right_space {
+        anchor_right.saturating_add(1)
+    } else if anchor.x >= area.x.saturating_add(width).saturating_add(1) {
+        anchor.x.saturating_sub(width.saturating_add(1))
+    } else {
+        area.x + (area.width.saturating_sub(width)) / 2
+    };
+
+    let bottom_space = area.y.saturating_add(area.height);
+    let y = if anchor.y.saturating_add(height) <= bottom_space {
+        anchor.y
+    } else {
+        bottom_space.saturating_sub(height)
+    };
+
+    Rect { x, y, width, height }
 }
 
 fn month(index: usize) -> &'static str {
@@ -285,7 +322,7 @@ mod tests {
         assert!(output.contains("00.00"));
         assert!(output.contains("13.00"));
         assert!(output.contains("**August 2026**"));
-        assert!(output.contains("Focus: 02.08.2026 00.00 Work"));
+        assert!(output.contains("Focus: 02.08.2026 Sun 00.00 Work"));
     }
 
     #[test]
@@ -295,7 +332,7 @@ mod tests {
 
         let output = render_to_string(&state, 160, 32);
         assert!(output.contains("13.00"));
-        assert!(output.contains("Focus: 02.08.2026 13.00 Work *"));
+        assert!(output.contains("Focus: 02.08.2026 Sun 13.00 Work *"));
     }
 
     #[test]
@@ -374,7 +411,7 @@ mod tests {
         assert!(output.contains("Day - 02.08.2026"));
         assert!(output.contains("> [+] add note"));
         assert!(output.contains("  [x] delete note"));
-        assert!(output.contains("Focus: 02.08.2026 Day"));
+        assert!(output.contains("Focus: 02.08.2026 Sun Day"));
     }
 
     #[test]
@@ -397,7 +434,7 @@ mod tests {
         };
 
         let output = render_to_string(&state, 120, 24);
-        assert!(output.contains("Focus: 02.08.2026 13.00 No activity *"));
+        assert!(output.contains("Focus: 02.08.2026 Sun 13.00 No activity *"));
     }
 
     #[test]

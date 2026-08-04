@@ -7,7 +7,10 @@ use ratatui::{
     Frame,
 };
 
-use crate::{controller::State, domain::Category};
+use crate::{
+    controller::{NoteTarget, State},
+    domain::Category,
+};
 
 use super::theme;
 
@@ -15,6 +18,33 @@ const DATE_WIDTH: usize = 16;
 const HOUR_CONTENT_WIDTH: usize = 5;
 const MIN_VISIBLE_DATE_ROWS: usize = 4;
 const MIN_VISIBLE_HOURS: usize = 4;
+
+pub(crate) fn focused_cell_rect(area: Rect, target: &NoteTarget) -> Option<Rect> {
+    let grid_area = grid_area(area);
+    let visible_dates = visible_dates_for_target(target, grid_area.height as usize);
+    let date = match target {
+        NoteTarget::Day { date } => *date,
+        NoteTarget::Hour { date, .. } => *date,
+    };
+    let row_y = focused_date_row_y(&visible_dates, date)?;
+
+    let (x, width) = match target {
+        NoteTarget::Day { .. } => (0u16, DATE_WIDTH as u16),
+        NoteTarget::Hour { hour, .. } => {
+            let visible_hours = visible_hours(*hour, visible_hour_cols(grid_area.width as usize));
+            let hour_index = visible_hours.iter().position(|visible| visible == hour)?;
+            let x = (DATE_WIDTH + 1 + hour_index * (HOUR_CONTENT_WIDTH + 1)) as u16;
+            (x, HOUR_CONTENT_WIDTH as u16)
+        }
+    };
+
+    Some(Rect {
+        x: grid_area.x + x,
+        y: grid_area.y + row_y,
+        width,
+        height: 1,
+    })
+}
 
 pub fn render(
     frame: &mut Frame,
@@ -132,6 +162,45 @@ fn build_rule_line(fill: char, cross: char, hour_count: usize) -> String {
         line.push(cross);
     }
     line
+}
+
+fn grid_area(area: Rect) -> Rect {
+    let sections = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Min(0), Constraint::Length(24)])
+        .split(area);
+    sections[0]
+}
+
+fn visible_dates_for_target(target: &NoteTarget, max_lines: usize) -> Vec<NaiveDate> {
+    let center = match target {
+        NoteTarget::Day { date } => *date,
+        NoteTarget::Hour { date, .. } => *date,
+    };
+    visible_dates(center, visible_date_rows(max_lines))
+}
+
+fn focused_date_row_y(visible_dates: &[NaiveDate], date: NaiveDate) -> Option<u16> {
+    let mut row_y = 2u16;
+    let mut active_month = None;
+
+    for current in visible_dates {
+        if active_month != Some((current.year(), current.month())) {
+            if active_month.is_some() {
+                row_y = row_y.saturating_add(1);
+            }
+            active_month = Some((current.year(), current.month()));
+            row_y = row_y.saturating_add(2);
+        }
+
+        if *current == date {
+            return Some(row_y);
+        }
+
+        row_y = row_y.saturating_add(2);
+    }
+
+    None
 }
 
 fn render_legend(frame: &mut Frame, area: Rect) {
