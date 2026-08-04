@@ -25,7 +25,9 @@ one month-grouped matrix:
    and show a visible `|` cursor at the current text position; `Shift+Enter`
    inserts a newline when the terminal reports it distinctly, and `Ctrl+J` is
    supported as the reliable fallback; noted cells show `*` in the matrix. A
-   boxed palette pane explains the number-to-category mapping.
+   boxed palette pane explains the number-to-category mapping. Pressing `?`
+   opens a read-only category help popup with short descriptions for each
+   category.
 
 **Domain model:**
 - **Category** — a fixed set of 10 activity types (Sleep, Health, Friends/Family, Romantic, Work, Waste, Travel, Hobbies/Skills, Relaxation, Other). Categories are the palette for filling hours.
@@ -135,6 +137,7 @@ life-tracker/
 │   │   ├── mod.rs           # render() entry + preview scene helpers
 │   │   ├── calendar_view.rs # month-grouped day x hour matrix + palette pane
 │   │   ├── category_picker.rs # popup/list to choose a category or the add-note action
+│   │   ├── help_popup.rs    # read-only category description popup
 │   │   ├── note_editor.rs   # popup text editor for day/hour notes
 │   │   ├── status_bar.rs    # "now" indicator + current focused slot line
 │   │   └── theme.rs         # category colors, styles

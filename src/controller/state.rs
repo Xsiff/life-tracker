@@ -30,6 +30,7 @@ pub enum Overlay {
         target: NoteTarget,
         selected: CategoryPickerSelection,
     },
+    Help,
     NoteEditor {
         target: NoteTarget,
         draft: String,

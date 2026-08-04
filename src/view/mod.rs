@@ -1,5 +1,6 @@
 pub mod calendar_view;
 pub mod category_picker;
+pub mod help_popup;
 pub mod note_editor;
 pub mod status_bar;
 pub mod theme;
@@ -48,6 +49,9 @@ fn render_overlay(frame: &mut Frame, state: &State, overlay: &Overlay, area: Rec
         Overlay::CategoryPicker { target, selected } => {
             category_picker::render(frame, area, target, *selected);
         }
+        Overlay::Help => {
+            help_popup::render(frame, area);
+        }
         Overlay::NoteEditor {
             target,
             draft,
@@ -64,6 +68,7 @@ fn overlay_rect(area: Rect, overlay: &Overlay) -> Rect {
             NoteTarget::Day { .. } => (30, 6),
             NoteTarget::Hour { .. } => (30, 17),
         },
+        Overlay::Help => (74, 16),
         Overlay::NoteEditor { .. } => (42, 12),
     };
 
@@ -76,6 +81,7 @@ fn overlay_rect(area: Rect, overlay: &Overlay) -> Rect {
         Overlay::NoteEditor { target, .. } => {
             calendar_view::focused_cell_rect(area, target)
         }
+        Overlay::Help => None,
     };
 
     match anchor {
@@ -386,7 +392,6 @@ mod tests {
         let mut day = Day::new(day_date);
         day.set_hour(13, Activity::new(Category::Work));
         days.insert(day_date, day);
-
         let state = State {
             cursor: Cursor {
                 date: date(2026, 8, 2),
@@ -410,6 +415,29 @@ mod tests {
         assert!(!output.contains(long_note));
         assert!(output.lines().any(|line| line.contains("This is a deliberately")));
         assert!(output.lines().any(|line| line.contains("wrapping")));
+    }
+
+    #[test]
+    fn renders_help_popup_overlay() {
+        let state = State {
+            cursor: Cursor {
+                date: date(2026, 8, 2),
+                hour: Some(13),
+            },
+            overlay: Some(Overlay::Help),
+            days: BTreeMap::new(),
+            last_error: None,
+            quit: false,
+        };
+
+        let output = render_to_string(&state, 96, 28);
+        assert!(output.contains("Category help"));
+        assert!(output.contains("Sleep"));
+        assert!(output.contains("Rest, recovery, and sleep"));
+        assert!(output.contains("Travel"));
+        assert!(output.contains("Commuting, transit, or trips"));
+        assert!(output.contains("Esc cancel"));
+        assert!(output.contains("Enter close"));
     }
 
     fn render_to_string(state: &State, width: u16, height: u16) -> String {

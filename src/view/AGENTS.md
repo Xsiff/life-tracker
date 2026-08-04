@@ -16,8 +16,8 @@ if present:
 1. Draw the base matrix view from `calendar_view.rs`.
 2. Draw the persistent status bar (`status_bar.rs`) across every view.
 3. If `state.overlay.is_some()`, draw the overlay popup anchored to the focused
-   cell over the base (`category_picker.rs` or `note_editor.rs`); the base stays
-   visible underneath.
+   cell over the base (`category_picker.rs`, `help_popup.rs`, or
+   `note_editor.rs`); the base stays visible underneath.
 
 Each base view reads the shared `Cursor` for selection and never keeps its own
 copy.
@@ -48,6 +48,8 @@ copy.
   target it renders only `[+] add note` and `[x] delete note`. The selected row
   is highlighted either way. The popup is positioned next to the focused cell
   when space allows, then flips or clamps to stay visible.
+- **`help_popup.rs`** — read-only popup opened by `?`. It lists every category
+  with its digit and a short description. `Esc` or `Enter` closes it.
 - **`note_editor.rs`** — popup text box showing the `NoteEditor` draft + text
   cursor; title reflects the `NoteTarget` (day or hour). The current cursor
   position is rendered visibly as `|`. `Shift+Enter` inserts a line break when
@@ -55,13 +57,8 @@ copy.
   plain `Enter` still saves. Like the picker, it anchors to the active cell
   instead of centering on the screen. The separator above the helper line spans
   the full inner popup width so the editor reads as one contained window.
-  position is rendered visibly as `|`. Draft text wraps to the popup's inner
-  width so long unbroken input never overflows the window. `Shift+Enter`
-  inserts a line break when the terminal reports it distinctly, `Ctrl+J` is
-  the reliable fallback, and plain `Enter` still saves. Like the picker, it
-  anchors to the active cell instead of centering on the screen. The separator
-  above the helper line spans the full inner popup width so the editor reads as
-  one contained window.
+  Draft text wraps to the popup's inner width so long unbroken input never
+  overflows the window.
 - **`status_bar.rs`** — shared "now" indicator + current focused slot line.
 - **`theme.rs`** — the single source of category colors:
   `fn color(category: Category) -> ratatui::style::Color`. Every screen pulls
@@ -80,6 +77,8 @@ copy.
 - **Legend palette.** The matrix view reserves a dedicated right-side pane for a
   boxed subtable showing every category number and color mapping so the numeric
   cells remain readable.
+- **Category help.** The `?` popup is the longer-form companion to the palette
+  pane: it explains what each category means in plain language.
 - **Grid separators.** Column dividers are part of the view contract now; if
   the matrix is changed, keep the date column, hour columns, row lines, and the
   month transition rule visually distinct. Month headers should be followed by a
