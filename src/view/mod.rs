@@ -210,7 +210,6 @@ mod tests {
         days.insert(date(2026, 8, 1), Day::new(date(2026, 8, 1)));
 
         let state = State {
-            view: ViewMode::Calendar,
             cursor: Cursor {
                 date: date(2026, 8, 1),
                 hour: Some(0),

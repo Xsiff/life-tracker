@@ -96,9 +96,6 @@ effect by the current base state + `Overlay`.
 - **`Cancel`** — in an overlay, discards it and returns to the underlying view.
   On the base view it is typically ignored or mapped to quit/back by the shell.
 - **`Char(c)`** — on a base view, letters are commands:
-  `Char('n')`/`Char('N')` opens the `NoteEditor` for the focused target,
-  `Char('x')` clears the focused target (`clear_hour` for an hour cell,
-  `clear_day_note` for a day focus),
   `Char('q')` quits (sets `quit = true`; `should_quit()` reports it to the main
   loop). Inside the `NoteEditor`, `Char(c)` inserts literal text.
 - **`InsertNewline`** — inside the `NoteEditor`, inserts a line break at the
