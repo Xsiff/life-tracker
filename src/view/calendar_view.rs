@@ -287,7 +287,7 @@ fn cell_content(
                 None => " *".to_string(),
             }
         }
-        None => " ·".to_string(),
+        None => String::new(),
     };
 
     let base = match activity {
