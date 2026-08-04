@@ -231,6 +231,8 @@ Legend:
   past the end of the draft, it is clamped to the end of the text.
 - `Shift+Enter` inserts a new line at the cursor when the terminal reports it
   distinctly; `Ctrl+J` is the reliable fallback. Plain `Enter` saves.
+- Long unbroken note text wraps inside the popup so it never overflows the
+  editor window.
 - The editor is anchored beside the focused cell instead of being centered.
 - The helper separator above `⏎ save   Esc cancel` stretches across the full
   inner width of the popup.

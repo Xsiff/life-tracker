@@ -25,7 +25,7 @@ pub fn render(
     let inner = block.inner(area);
     frame.render_widget(block, area);
 
-    let mut lines = draft_lines_with_cursor(draft, cursor);
+    let mut lines = draft_lines_with_cursor(draft, cursor, inner.width as usize);
     while lines.len() < inner.height.saturating_sub(2) as usize {
         lines.push(Line::raw(""));
     }
@@ -52,36 +52,58 @@ fn title(state: &State, target: &NoteTarget) -> String {
     }
 }
 
-fn draft_lines_with_cursor(draft: &str, cursor: usize) -> Vec<Line<'static>> {
+fn draft_lines_with_cursor(draft: &str, cursor: usize, width: usize) -> Vec<Line<'static>> {
+    if width == 0 {
+        return vec![];
+    }
+
     let chars: Vec<char> = draft.chars().collect();
     let cursor = cursor.min(chars.len());
     let mut lines = vec![Vec::<Span<'static>>::new()];
+    let mut line_width = 0usize;
 
     for (index, ch) in chars.iter().enumerate() {
         if index == cursor {
-            current_line(&mut lines).push(cursor_span());
+            push_wrapped_span(&mut lines, &mut line_width, cursor_span(), width);
         }
 
         if *ch == '\n' {
             lines.push(Vec::new());
+            line_width = 0;
             continue;
         }
 
-        current_line(&mut lines).push(Span::raw(ch.to_string()));
+        if line_width >= width {
+            lines.push(Vec::new());
+            line_width = 0;
+        }
+
+        push_wrapped_span(&mut lines, &mut line_width, Span::raw(ch.to_string()), width);
     }
 
     if cursor == chars.len() {
-        current_line(&mut lines).push(cursor_span());
+        push_wrapped_span(&mut lines, &mut line_width, cursor_span(), width);
     }
 
     lines.into_iter().map(Line::from).collect()
 }
 
-fn current_line<'a>(lines: &'a mut Vec<Vec<Span<'static>>>) -> &'a mut Vec<Span<'static>> {
+fn push_wrapped_span(
+    lines: &mut Vec<Vec<Span<'static>>>,
+    line_width: &mut usize,
+    span: Span<'static>,
+    width: usize,
+) {
     if lines.is_empty() {
         lines.push(Vec::new());
     }
-    lines.last_mut().expect("at least one line")
+    if *line_width >= width {
+        lines.push(Vec::new());
+        *line_width = 0;
+    }
+
+    *line_width += 1;
+    lines.last_mut().expect("at least one line").push(span);
 }
 
 fn cursor_span() -> Span<'static> {
