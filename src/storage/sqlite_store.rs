@@ -24,6 +24,14 @@ impl Store {
         Ok(store)
     }
 
+    #[cfg(test)]
+    pub fn in_memory() -> anyhow::Result<Self> {
+        let conn = Connection::open_in_memory().context("failed to open in-memory database")?;
+        let store = Self { conn };
+        store.init()?;
+        Ok(store)
+    }
+
     pub fn load_all(&self) -> anyhow::Result<BTreeMap<NaiveDate, Day>> {
         let mut days = BTreeMap::new();
 

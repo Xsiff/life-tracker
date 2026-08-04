@@ -54,8 +54,9 @@ not part of any cross-module protocol, so they are defined here, not in `domain`
   uses only `Calendar`, which is the matrix screen. Keep it as a single source
   of base-screen identity even while only one mode is live.
 - **`Overlay`** — optional modal state on top of the base view: `CategoryPicker`
-  (a `NoteTarget` plus the selected picker row) or `NoteEditor` (target, draft
-  text, text cursor). `None` means the base view has focus.
+  (a `NoteTarget` plus the selected picker row), `Help` (read-only category
+  descriptions), or `NoteEditor` (target, draft text, text cursor). `None`
+  means the base view has focus.
 - **`CategoryPickerSelection`** — the focused row inside `CategoryPicker`:
   either a concrete `Category` or one of the trailing actions:
   `AddNote`, `DeleteNote`, or `DeleteActivity`.
@@ -95,9 +96,9 @@ effect by the current base state + `Overlay`.
   one exists. In `NoteEditor`, `Confirm` saves the draft.
 - **`Cancel`** — in an overlay, discards it and returns to the underlying view.
   On the base view it is typically ignored or mapped to quit/back by the shell.
-- **`Char(c)`** — on a base view, letters are commands:
-  `Char('q')` quits (sets `quit = true`; `should_quit()` reports it to the main
-  loop). Inside the `NoteEditor`, `Char(c)` inserts literal text.
+- **`Char(c)`** — on a base view, `Char('?')` opens the read-only category help
+  popup; `Char('q')` quits (sets `quit = true`; `should_quit()` reports it to
+  the main loop). Inside the `NoteEditor`, `Char(c)` inserts literal text.
 - **`InsertNewline`** — inside the `NoteEditor`, inserts a line break at the
   current text cursor. This is the `Shift+Enter` path when the terminal reports
   it distinctly, and `Ctrl+J` is the reliable fallback. Ignored elsewhere.
@@ -107,6 +108,8 @@ effect by the current base state + `Overlay`.
   discriminant) when `n` maps to a real category; it never targets the
   `AddNote` row. Inside the `NoteEditor`, it inserts the corresponding literal
   digit so number keys work the same as other text input. Ignored elsewhere.
+- **`Help` overlay** — read-only. `Confirm` or `Cancel` closes it; other
+  actions leave it open.
 - **Moves** — in the base matrix, `MoveLeft`/`MoveRight` move horizontally
   across the row. `MoveLeft` from hour `00` lands on the date column for the
   same row; `MoveLeft` from the date column wraps to hour `23` on the previous

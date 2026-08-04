@@ -55,7 +55,7 @@ Output:
 │──────────────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼                                  │
 ├────────────────────────────────────────────────────────────────────────────────────────────────┤
 │ now 02.08.2026 Sun · 13:47   Focus: 02.08.2026 Sun 13.00 Work *                                  │
-│ ←↑↓→ move  ⏎ open  q quit                                                                       │
+│ ←↑↓→ move  ⏎ open  ? help  q quit                                                              │
 └────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -113,7 +113,7 @@ Output:
 │──────────────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼│6 = Travel            │         │
 ├────────────────────────────────────────────────────────────────────────────────────────────────┤
 │ now 02.08.2026 Sat · 13:47   Focus: 02.08.2026 Sat Day *                                      │
-│ ←↑↓→ move  ⏎ open  q quit                                                                       │
+│ ←↑↓→ move  ⏎ open  ? help  q quit                                                              │
 └────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -234,4 +234,47 @@ Legend:
 - The editor is anchored beside the focused cell instead of being centered.
 
 The matrix is the only base screen now. Editing happens by focusing an hour cell
-and opening one of the two popup overlays above.
+and opening one of the three popup overlays above.
+
+## 5. Category help popup
+
+State: base matrix view, plus
+
+```rust
+overlay: Some(Overlay::Help)
+```
+
+Output:
+
+```text
+        ┌ Category help ───────────────────────────────┐
+        │ Each category maps to one digit and one      │
+        │ short meaning.                                │
+        │                                                │
+        │  0 Sleep         Rest, recovery, and sleep    │
+        │  1 Health        Exercise, medical care, and  │
+        │                   upkeep                      │
+        │  2 Friends/Family Time with friends and      │
+        │                   family                      │
+        │  3 Romantic      Partner time and relation-   │
+        │                   ship care                  │
+        │  4 Work          Paid work, school, or       │
+        │                   obligations                │
+        │  5 Waste         Low-value time or           │
+        │                   procrastination            │
+        │  6 Travel        Commuting, transit, or     │
+        │                   trips                      │
+        │  7 Hobbies/Skills Practice, learning, and    │
+        │                   projects                   │
+        │  8 Relaxation    Downtime and entertainment   │
+        │  9 Other         Anything that does not fit  │
+        │                   above                      │
+        │                                                │
+        │ Esc cancel   Enter close                     │
+        └──────────────────────────────────────────────┘
+```
+
+Legend:
+- Press `?` from the base matrix to open this popup.
+- It is read-only and does not change the focused cell or stored data.
+- `Esc` or `Enter` closes it.

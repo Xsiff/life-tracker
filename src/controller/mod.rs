@@ -125,6 +125,12 @@ impl Controller {
                 self.state.overlay = None;
                 self.restore_focus(target);
             }
+            (Overlay::Help, Action::Confirm) | (Overlay::Help, Action::Cancel) => {
+                self.state.overlay = None;
+            }
+            (Overlay::Help, _) => {
+                self.state.overlay = Some(Overlay::Help);
+            }
             (Overlay::NoteEditor { target, draft, cursor }, Action::Char(c)) => {
                 let mut draft = draft;
                 let mut cursor = cursor;
@@ -190,6 +196,9 @@ impl Controller {
                 });
             }
             Action::CycleView => {}
+            Action::Char('?') => {
+                self.state.overlay = Some(Overlay::Help);
+            }
             Action::Char('q') | Action::Char('Q') => self.state.quit = true,
             Action::Tick
             | Action::Cancel
@@ -488,7 +497,9 @@ fn erase_char(draft: &mut String, cursor: &mut usize) {
 mod tests {
     use chrono::NaiveDate;
 
-    use super::{insert_char, move_cursor_hour};
+    use crate::{domain::Action, storage::Store};
+
+    use super::{insert_char, move_cursor_hour, Controller, Overlay};
 
     #[test]
     fn insert_char_supports_newlines() {
@@ -526,5 +537,17 @@ mod tests {
             move_cursor_hour(date, Some(23), 1),
             (NaiveDate::from_ymd_opt(2026, 8, 5).unwrap(), None)
         );
+    }
+
+    #[test]
+    fn question_mark_opens_and_closes_help_overlay() {
+        let store = Store::in_memory().expect("in-memory store");
+        let mut controller = Controller::new(store).expect("controller");
+
+        controller.update(Action::Char('?')).expect("open help");
+        assert!(matches!(controller.state().overlay, Some(Overlay::Help)));
+
+        controller.update(Action::Cancel).expect("close help");
+        assert!(controller.state().overlay.is_none());
     }
 }
