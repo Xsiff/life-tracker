@@ -9,7 +9,7 @@ use crate::{
     storage::Store,
 };
 
-pub use state::{CategoryPickerSelection, Cursor, NoteTarget, Overlay, State, ViewMode};
+pub use state::{CategoryPickerSelection, Cursor, NoteTarget, Overlay, State};
 
 pub struct Controller {
     state: State,

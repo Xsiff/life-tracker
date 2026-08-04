@@ -32,16 +32,6 @@ pub fn selected(style: Style) -> Style {
         .add_modifier(Modifier::BOLD)
 }
 
-pub fn title_style() -> Style {
-    Style::default().add_modifier(Modifier::BOLD)
-}
-
-pub fn now_style() -> Style {
-    Style::default()
-        .fg(Color::Indexed(220))
-        .add_modifier(Modifier::BOLD)
-}
-
 pub fn now_cell(style: Style) -> Style {
     style
         .bg(Color::Indexed(58))

@@ -5,11 +5,6 @@ use chrono::{Local, NaiveDate, Timelike};
 use crate::domain::{Activity, Category, Day};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ViewMode {
-    Calendar,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Cursor {
     pub date: NaiveDate,
     pub hour: Option<u8>,
@@ -44,7 +39,6 @@ pub enum Overlay {
 
 #[derive(Debug, Clone)]
 pub struct State {
-    pub view: ViewMode,
     pub cursor: Cursor,
     pub overlay: Option<Overlay>,
     pub days: BTreeMap<NaiveDate, Day>,
@@ -55,7 +49,6 @@ pub struct State {
 impl State {
     pub fn new(today: NaiveDate, days: BTreeMap<NaiveDate, Day>) -> Self {
         Self {
-            view: ViewMode::Calendar,
             cursor: Cursor {
                 date: today,
                 hour: Some(Local::now().hour() as u8),

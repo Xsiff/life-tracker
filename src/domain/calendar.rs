@@ -3,6 +3,7 @@ use chrono::{Datelike, Duration, NaiveDate, Weekday};
 use super::{Activity, Category};
 
 pub const HOURS_PER_DAY: usize = 24;
+#[allow(dead_code)]
 pub const WINDOW_WEEKS: usize = 5;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -12,6 +13,7 @@ pub struct Day {
     note: Option<String>,
 }
 
+#[allow(dead_code)]
 impl Day {
     pub fn new(date: NaiveDate) -> Self {
         Self {
@@ -104,12 +106,14 @@ impl Day {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Week {
     iso_year: i32,
     iso_week: u32,
 }
 
+#[allow(dead_code)]
 impl Week {
     pub fn from_date(date: NaiveDate) -> Self {
         let iso = date.iso_week();
@@ -146,11 +150,13 @@ impl Week {
     }
 }
 
+#[allow(dead_code)]
 pub fn start_of_week(date: NaiveDate) -> NaiveDate {
     let days_from_monday = i64::from(date.weekday().num_days_from_monday());
     date - Duration::days(days_from_monday)
 }
 
+#[allow(dead_code)]
 pub fn week_window_centered(date: NaiveDate) -> [NaiveDate; WINDOW_WEEKS] {
     let start = start_of_week(date);
     std::array::from_fn(|idx| start + Duration::weeks(idx as i64))
