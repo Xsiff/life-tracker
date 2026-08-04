@@ -124,22 +124,21 @@ fn build_day_line(
     let day_has_note = state.day(date).and_then(|d| d.note()).is_some();
     let date_format = date.format("%d.%m.%Y").to_string();
     let weekday = date.format("%a").to_string();
-    let date_label = if day_has_note {
-        let combined = format!("{} {}*", date_format, weekday);
-        format!("{:<DATE_WIDTH$}│", combined)
+    let combined = if day_has_note {
+        format!("{} {}*", date_format, weekday)
     } else {
-        let combined = format!("{} {}", date_format, weekday);
-        format!("{:<DATE_WIDTH$}│", combined)
+        format!("{} {}", date_format, weekday)
     };
-    let mut spans = vec![Span::styled(
-        date_label,
+    let date_text = Span::styled(
+        format!("{:>16}", combined),
         date_style(
             date,
             state.cursor.date,
             now.date_naive(),
             state.cursor.hour.is_none(),
         ),
-    )];
+    );
+    let mut spans = vec![date_text, Span::raw("│")];
 
     for hour in hours {
         let activity = state.activity(date, *hour);
