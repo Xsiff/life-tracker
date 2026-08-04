@@ -53,7 +53,8 @@ copy.
   position is rendered visibly as `|`. `Shift+Enter` inserts a line break when
   the terminal reports it distinctly, `Ctrl+J` is the reliable fallback, and
   plain `Enter` still saves. Like the picker, it anchors to the active cell
-  instead of centering on the screen.
+  instead of centering on the screen. The separator above the helper line spans
+  the full inner popup width so the editor reads as one contained window.
 - **`status_bar.rs`** — shared "now" indicator + current focused slot line.
 - **`theme.rs`** — the single source of category colors:
   `fn color(category: Category) -> ratatui::style::Color`. Every screen pulls

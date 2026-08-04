@@ -232,6 +232,8 @@ Legend:
 - `Shift+Enter` inserts a new line at the cursor when the terminal reports it
   distinctly; `Ctrl+J` is the reliable fallback. Plain `Enter` saves.
 - The editor is anchored beside the focused cell instead of being centered.
+- The helper separator above `⏎ save   Esc cancel` stretches across the full
+  inner width of the popup.
 
 The matrix is the only base screen now. Editing happens by focusing an hour cell
 and opening one of the two popup overlays above.

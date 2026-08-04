@@ -29,10 +29,14 @@ pub fn render(
     while lines.len() < inner.height.saturating_sub(2) as usize {
         lines.push(Line::raw(""));
     }
-    lines.push(Line::raw("────────────────────────────"));
+    lines.push(Line::raw(separator_line(inner.width)));
     lines.push(Line::raw("⏎ save   Esc cancel"));
 
     frame.render_widget(Paragraph::new(lines), inner);
+}
+
+fn separator_line(width: u16) -> String {
+    "─".repeat(width as usize)
 }
 
 fn title(state: &State, target: &NoteTarget) -> String {
