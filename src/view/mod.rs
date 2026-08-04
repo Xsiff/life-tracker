@@ -64,7 +64,7 @@ fn overlay_rect(area: Rect, overlay: &Overlay) -> Rect {
             NoteTarget::Day { .. } => (30, 6),
             NoteTarget::Hour { .. } => (30, 17),
         },
-        Overlay::NoteEditor { .. } => (30, 8),
+        Overlay::NoteEditor { .. } => (42, 12),
     };
 
     let width = width.min(area.width);
@@ -210,7 +210,6 @@ mod tests {
         days.insert(date(2026, 8, 1), Day::new(date(2026, 8, 1)));
 
         let state = State {
-            view: ViewMode::Calendar,
             cursor: Cursor {
                 date: date(2026, 8, 1),
                 hour: Some(0),
