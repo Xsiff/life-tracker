@@ -108,7 +108,8 @@ effect by the current base state + `Overlay`.
   ignored elsewhere.
 - **`Digit(n)`** — in `CategoryPicker`, selects category `n` (digit →
   discriminant) when `n` maps to a real category; it never targets the
-  `AddNote` row. Ignored elsewhere.
+  `AddNote` row. Inside the `NoteEditor`, it inserts the corresponding literal
+  digit so number keys work the same as other text input. Ignored elsewhere.
 - **Moves** — in the base matrix, `MoveLeft`/`MoveRight` move horizontally
   across the row. `MoveLeft` from hour `00` lands on the date column for the
   same row; `MoveLeft` from the date column wraps to hour `23` on the previous
