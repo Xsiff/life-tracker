@@ -71,6 +71,53 @@ Legend:
   part of the intended appearance, not incidental spacing.
 - The visible hour columns shown above are only the current horizontal viewport;
   moving left/right shifts that hour window around the focused hour.
+- **Date column highlight containment.** When the date column is focused
+  (`cursor.hour = None`), the selection highlight is rendered only on the
+  16-character date text (e.g. `05.08.2026 Wed`) and does **not** extend to
+  include the `│` separator. This keeps the highlight visually contained within
+  the date column boundary.
+
+## 1b. Matrix view — day focus
+
+State:
+
+```rust
+State {
+    cursor: Cursor { date: 2026-08-02, hour: None },
+    overlay: None,
+    days: {
+        2026-08-02: day note "Daily journal",
+                    08 Work, 13 Work(note),
+    },
+    last_error: None,
+    quit: false,
+}
+```
+
+Output:
+
+```text
+┌ life-tracker ───────────────────────── Aug 2026 ───────────────────────────────────────────────┐
+│              │08.00│09.00│10.00│11.00│12.00│13.00│14.00│15.00│┌ Palette ─────────────┐         │
+│──────────────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼│0 = Sleep             │         │
+│ **August 2026**                                                  │1 = Health            │         │
+│══════════════╪═════╪═════╪═════╪═════╪═════╪═════╪═════╪═════╪│2 = Friends/Family    │         │
+│ 02.08.2026 Sat*│ 4   │ ·   │ ·   │ ·   │ ·   │ 4*  │ ·   │ ·   ││3 = Romantic          │         │
+│──────────────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼│4 = Work              │         │
+│ 03.08.2026 Sun  │ ·   │ ·   │ ·   │ ·   │ ·   │ ·   │ ·   │ ·   ││5 = Waste             │         │
+│──────────────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼─────┼│6 = Travel            │         │
+├────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ now 02.08.2026 Sat · 13:47   Focus: 02.08.2026 Sat Day *                                      │
+│ ←↑↓→ move  ⏎ open  n note  x clear  q quit                                                      │
+└────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+Legend:
+- The date column is highlighted when `cursor.hour` is `None` (day focus).
+- The selection highlight is **only** on the 16-character date text and does
+  not extend into the `│` separator or the adjacent hour cell.
+- Day focus means actions apply to the whole day; pressing `Enter` opens the
+  day-level note picker (`[+] add note`, `[x] delete note`).
 
 ## 2. Category picker overlay
 
