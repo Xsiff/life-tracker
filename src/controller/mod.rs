@@ -131,6 +131,12 @@ impl Controller {
                 insert_char(&mut draft, &mut cursor, c);
                 self.state.overlay = Some(Overlay::NoteEditor { target, draft, cursor });
             }
+            (Overlay::NoteEditor { target, draft, cursor }, Action::Digit(n)) => {
+                let mut draft = draft;
+                let mut cursor = cursor;
+                insert_char(&mut draft, &mut cursor, char::from_digit(n as u32, 10).unwrap());
+                self.state.overlay = Some(Overlay::NoteEditor { target, draft, cursor });
+            }
             (Overlay::NoteEditor { target, draft, cursor }, Action::InsertNewline) => {
                 let mut draft = draft;
                 let mut cursor = cursor;
