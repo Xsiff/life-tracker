@@ -4,8 +4,6 @@ pub mod note_editor;
 pub mod status_bar;
 pub mod theme;
 
-use std::collections::BTreeMap;
-
 use chrono::{DateTime, Datelike, Local};
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
@@ -13,38 +11,11 @@ use ratatui::{
     Frame,
 };
 
-use crate::controller::{CategoryPickerSelection, Cursor, NoteTarget, Overlay, State};
-use crate::domain::{Activity, Category, Day};
+use crate::controller::{NoteTarget, Overlay, State};
 
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-pub struct PreviewScene {
-    pub name: &'static str,
-    pub state: State,
-}
-
-#[allow(dead_code)]
 pub fn render(frame: &mut Frame, state: &State) {
     let now = Local::now();
     render_with_now(frame, state, &now);
-}
-
-#[allow(dead_code)]
-pub fn preview_scenes() -> Vec<PreviewScene> {
-    vec![
-        PreviewScene {
-            name: "Calendar",
-            state: calendar_preview_state(),
-        },
-        PreviewScene {
-            name: "Category Picker",
-            state: category_picker_preview_state(),
-        },
-        PreviewScene {
-            name: "Note Editor",
-            state: note_editor_preview_state(),
-        },
-    ]
 }
 
 fn render_with_now(frame: &mut Frame, state: &State, now: &DateTime<Local>) {
@@ -149,139 +120,6 @@ fn month(index: usize) -> &'static str {
     ][index]
 }
 
-#[allow(dead_code)]
-fn calendar_preview_state() -> State {
-    let mut days = BTreeMap::new();
-
-    let mut monday = Day::new(date(2026, 7, 27));
-    for hour in 0..16 {
-        monday.set_hour(hour, Activity::new(Category::Sleep));
-    }
-    days.insert(monday.date(), monday);
-
-    let mut tuesday = Day::new(date(2026, 7, 28));
-    for hour in 0..24 {
-        tuesday.set_hour(hour, Activity::new(Category::Work));
-    }
-    days.insert(tuesday.date(), tuesday);
-
-    let mut wednesday = Day::new(date(2026, 7, 29));
-    for hour in 0..3 {
-        wednesday.set_hour(hour, Activity::new(Category::Health));
-    }
-    days.insert(wednesday.date(), wednesday);
-
-    let mut thursday = Day::new(date(2026, 7, 30));
-    for hour in 0..16 {
-        thursday.set_hour(hour, Activity::new(Category::Sleep));
-    }
-    days.insert(thursday.date(), thursday);
-
-    let mut friday = Day::new(date(2026, 7, 31));
-    for hour in 0..8 {
-        friday.set_hour(hour, Activity::new(Category::Travel));
-    }
-    days.insert(friday.date(), friday);
-
-    let mut sunday = Day::new(date(2026, 8, 2));
-    for hour in 0..7 {
-        sunday.set_hour(hour, Activity::new(Category::Work));
-    }
-    days.insert(sunday.date(), sunday);
-
-    let mut monday_next = Day::new(date(2026, 8, 3));
-    for hour in 0..8 {
-        monday_next.set_hour(hour, Activity::new(Category::Sleep));
-    }
-    days.insert(monday_next.date(), monday_next);
-
-    let mut tuesday_next = Day::new(date(2026, 8, 4));
-    for hour in 0..16 {
-        tuesday_next.set_hour(hour, Activity::new(Category::Work));
-    }
-    days.insert(tuesday_next.date(), tuesday_next);
-
-    let mut wednesday_next = Day::new(date(2026, 8, 5));
-    for hour in 0..8 {
-        wednesday_next.set_hour(hour, Activity::new(Category::Health));
-    }
-    days.insert(wednesday_next.date(), wednesday_next);
-
-    State {
-        cursor: Cursor {
-            date: date(2026, 8, 2),
-            hour: Some(13),
-        },
-        overlay: None,
-        days,
-        last_error: Some("Preview: Calendar  ←/→ switch scene  q quit".to_string()),
-        quit: false,
-    }
-}
-
-#[allow(dead_code)]
-fn matrix_preview_state(overlay: Option<Overlay>) -> State {
-    let mut days = BTreeMap::new();
-    let mut day = Day::new(date(2026, 8, 2));
-    for hour in 0..=6 {
-        day.set_hour(hour, Activity::new(Category::Sleep));
-    }
-    day.set_hour(7, Activity::new(Category::Health));
-    day.set_hour(8, Activity::new(Category::Travel));
-    for hour in 9..=11 {
-        day.set_hour(hour, Activity::new(Category::Work));
-    }
-    day.set_hour(12, Activity::new(Category::Health));
-    day.set_hour(13, Activity::with_note(Category::Work, "Sprint planning, blocked"));
-    day.set_hour(14, Activity::new(Category::Work));
-    day.set_hour(16, Activity::new(Category::Relaxation));
-    day.set_hour(17, Activity::new(Category::HobbiesSkills));
-    days.insert(day.date(), day);
-
-    State {
-        cursor: Cursor {
-            date: date(2026, 8, 2),
-            hour: Some(13),
-        },
-        overlay,
-        days,
-        last_error: Some("Preview: Matrix  ←/→ switch scene  q quit".to_string()),
-        quit: false,
-    }
-}
-
-#[allow(dead_code)]
-fn category_picker_preview_state() -> State {
-    let mut state = matrix_preview_state(Some(Overlay::CategoryPicker {
-        target: NoteTarget::Hour {
-            date: date(2026, 8, 2),
-            hour: 13,
-        },
-        selected: CategoryPickerSelection::Category(Category::Sleep),
-    }));
-    state.last_error = Some("Preview: Category Picker  ←/→ switch scene  q quit".to_string());
-    state
-}
-
-#[allow(dead_code)]
-fn note_editor_preview_state() -> State {
-    let mut state = matrix_preview_state(Some(Overlay::NoteEditor {
-        target: NoteTarget::Hour {
-            date: date(2026, 8, 2),
-            hour: 13,
-        },
-        draft: "Sprint planning, blocked\non API keys.".to_string(),
-        cursor: 40,
-    }));
-    state.last_error = Some("Preview: Note Editor  ←/→ switch scene  q quit".to_string());
-    state
-}
-
-#[allow(dead_code)]
-fn date(year: i32, month: u32, day: u32) -> chrono::NaiveDate {
-    chrono::NaiveDate::from_ymd_opt(year, month, day).expect("valid date")
-}
-
 #[cfg(test)]
 mod tests {
     use std::collections::BTreeMap;
@@ -292,22 +130,59 @@ mod tests {
     use crate::controller::{CategoryPickerSelection, Cursor, NoteTarget, Overlay, State};
     use crate::domain::{Activity, Category, Day};
 
-    use super::{calendar_preview_state, matrix_preview_state, render_with_now};
+    use super::render_with_now;
+
+    fn date(year: i32, month: u32, day: u32) -> NaiveDate {
+        NaiveDate::from_ymd_opt(year, month, day).expect("valid date")
+    }
+
+    fn matrix_state(overlay: Option<Overlay>) -> State {
+        let mut days = BTreeMap::new();
+        let day_date = date(2026, 8, 2);
+        let mut day = Day::new(day_date);
+        for hour in 0..=6 {
+            day.set_hour(hour, Activity::new(Category::Sleep));
+        }
+        day.set_hour(7, Activity::new(Category::Health));
+        day.set_hour(8, Activity::new(Category::Travel));
+        for hour in 9..=11 {
+            day.set_hour(hour, Activity::new(Category::Work));
+        }
+        day.set_hour(12, Activity::new(Category::Health));
+        day.set_hour(13, Activity::with_note(Category::Work, "Sprint planning, blocked"));
+        day.set_hour(14, Activity::new(Category::Work));
+        day.set_hour(16, Activity::new(Category::Relaxation));
+        day.set_hour(17, Activity::new(Category::HobbiesSkills));
+        days.insert(day_date, day);
+
+        State {
+            cursor: Cursor {
+                date: date(2026, 8, 2),
+                hour: Some(13),
+            },
+            overlay,
+            days,
+            last_error: Some("Preview: Matrix  ←/→ switch scene  q quit".to_string()),
+            quit: false,
+        }
+    }
 
     #[test]
     fn renders_calendar_view_scaffold() {
         let mut days = BTreeMap::new();
-        let mut monday = Day::new(date(2026, 7, 27));
+        let monday_date = date(2026, 7, 27);
+        let mut monday = Day::new(monday_date);
         for hour in 0..16 {
             monday.set_hour(hour, Activity::new(Category::Sleep));
         }
-        days.insert(monday.date(), monday);
+        days.insert(monday_date, monday);
 
-        let mut sunday = Day::new(date(2026, 8, 2));
+        let sunday_date = date(2026, 8, 2);
+        let mut sunday = Day::new(sunday_date);
         for hour in 0..7 {
             sunday.set_hour(hour, Activity::new(Category::Work));
         }
-        days.insert(sunday.date(), sunday);
+        days.insert(sunday_date, sunday);
 
         let state = State {
             cursor: Cursor {
@@ -330,7 +205,7 @@ mod tests {
 
     #[test]
     fn renders_matrix_focus_line() {
-        let mut state = matrix_preview_state(None);
+        let mut state = matrix_state(None);
         state.last_error = None;
 
         let output = render_to_string(&state, 160, 32);
@@ -417,9 +292,10 @@ mod tests {
     #[test]
     fn renders_note_only_hour_focus() {
         let mut days = BTreeMap::new();
-        let mut day = Day::new(date(2026, 8, 2));
+        let day_date = date(2026, 8, 2);
+        let mut day = Day::new(day_date);
         day.set_hour(13, Activity::note_only("kept after deleting activity"));
-        days.insert(day.date(), day);
+        days.insert(day_date, day);
 
         let state = State {
             cursor: Cursor {
@@ -439,9 +315,10 @@ mod tests {
     #[test]
     fn renders_note_editor_overlay() {
         let mut days = BTreeMap::new();
-        let mut day = Day::new(date(2026, 8, 2));
+        let day_date = date(2026, 8, 2);
+        let mut day = Day::new(day_date);
         day.set_hour(13, Activity::new(Category::Work));
-        days.insert(day.date(), day);
+        days.insert(day_date, day);
 
         let state = State {
             cursor: Cursor {
@@ -467,24 +344,6 @@ mod tests {
         assert!(output.contains("on API keys.|"));
     }
 
-    #[test]
-    #[ignore]
-    fn print_calendar_example() {
-        let mut state = calendar_preview_state();
-        state.last_error = None;
-
-        println!("{}", render_to_string(&state, 160, 24));
-    }
-
-    #[test]
-    #[ignore]
-    fn print_day_example() {
-        let mut state = matrix_preview_state(None);
-        state.last_error = None;
-
-        println!("{}", render_to_string(&state, 160, 32));
-    }
-
     fn render_to_string(state: &State, width: u16, height: u16) -> String {
         let backend = TestBackend::new(width, height);
         let mut terminal = Terminal::new(backend).expect("terminal");
@@ -507,9 +366,5 @@ mod tests {
             lines.push(line);
         }
         lines.join("\n")
-    }
-
-    fn date(year: i32, month: u32, day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(year, month, day).expect("valid date")
     }
 }
