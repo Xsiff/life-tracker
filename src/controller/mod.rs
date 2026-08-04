@@ -200,22 +200,10 @@ impl Controller {
     }
 
     fn move_cursor_hour(&mut self, delta: i8) {
-        if self.state.cursor.hour.is_none() {
-            if delta > 0 {
-                self.state.cursor.hour = Some(0);
-            }
-            return;
-        }
-
-        let hour = self.state.cursor.hour.unwrap_or(0) as i16 + i16::from(delta);
-        if hour < 0 {
-            self.state.cursor.hour = None;
-        } else if hour > 23 {
-            self.state.cursor.hour = Some(0);
-            self.state.cursor.date += chrono::Duration::days(1);
-        } else {
-            self.state.cursor.hour = Some(hour as u8);
-        }
+        let (date, hour) =
+            move_cursor_hour(self.state.cursor.date, self.state.cursor.hour, delta);
+        self.state.cursor.date = date;
+        self.state.cursor.hour = hour;
     }
 
     fn open_note_editor_for_focus(&mut self) {
@@ -388,6 +376,21 @@ fn today() -> NaiveDate {
     Local::now().date_naive()
 }
 
+fn move_cursor_hour(date: NaiveDate, hour: Option<u8>, delta: i8) -> (NaiveDate, Option<u8>) {
+    if delta == 0 {
+        return (date, hour);
+    }
+
+    match (hour, delta.is_negative()) {
+        (None, true) => (date - chrono::Duration::days(1), Some(23)),
+        (None, false) => (date, Some(0)),
+        (Some(0), true) => (date, None),
+        (Some(23), false) => (date + chrono::Duration::days(1), None),
+        (Some(hour), true) => (date, Some(hour - 1)),
+        (Some(hour), false) => (date, Some(hour + 1)),
+    }
+}
+
 fn picker_default_selection(state: &State, target: &NoteTarget) -> CategoryPickerSelection {
     match *target {
         NoteTarget::Day { .. } => CategoryPickerSelection::AddNote,
@@ -500,7 +503,9 @@ fn erase_char(draft: &mut String, cursor: &mut usize) {
 
 #[cfg(test)]
 mod tests {
-    use super::insert_char;
+    use chrono::NaiveDate;
+
+    use super::{insert_char, move_cursor_hour};
 
     #[test]
     fn insert_char_supports_newlines() {
@@ -511,5 +516,32 @@ mod tests {
 
         assert_eq!(draft, "a\nbc");
         assert_eq!(cursor, 2);
+    }
+
+    #[test]
+    fn move_cursor_hour_wraps_left_from_date_column_to_previous_day() {
+        let date = NaiveDate::from_ymd_opt(2026, 8, 4).unwrap();
+
+        assert_eq!(
+            move_cursor_hour(date, None, -1),
+            (NaiveDate::from_ymd_opt(2026, 8, 3).unwrap(), Some(23))
+        );
+    }
+
+    #[test]
+    fn move_cursor_hour_enters_first_hour_from_date_column_when_moving_right() {
+        let date = NaiveDate::from_ymd_opt(2026, 8, 4).unwrap();
+
+        assert_eq!(move_cursor_hour(date, None, 1), (date, Some(0)));
+    }
+
+    #[test]
+    fn move_cursor_hour_wraps_right_from_last_hour_to_next_day_column() {
+        let date = NaiveDate::from_ymd_opt(2026, 8, 4).unwrap();
+
+        assert_eq!(
+            move_cursor_hour(date, Some(23), 1),
+            (NaiveDate::from_ymd_opt(2026, 8, 5).unwrap(), None)
+        );
     }
 }

@@ -111,8 +111,9 @@ effect by the current base state + `Overlay`.
   `AddNote` row. Ignored elsewhere.
 - **Moves** — in the base matrix, `MoveLeft`/`MoveRight` move horizontally
   across the row. `MoveLeft` from hour `00` lands on the date column for the
-  same row; `MoveRight` from the date column enters hour `00`. `MoveRight` from
-  hour `23` advances to the next date at hour `00`. `MoveUp`/`MoveDown` move
+  same row; `MoveLeft` from the date column wraps to hour `23` on the previous
+  date. `MoveRight` from the date column enters hour `00`. `MoveRight` from
+  hour `23` advances to the next date’s date column. `MoveUp`/`MoveDown` move
   across dates while keeping either the focused hour or the day-column focus.
   The visible matrix window follows the focused date/hour, so moving beyond the
   currently visible slice scrolls the viewport. In the picker, vertical moves
