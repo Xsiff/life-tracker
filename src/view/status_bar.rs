@@ -23,7 +23,7 @@ pub fn render(frame: &mut Frame, area: Rect, state: &State, now: &DateTime<Local
         Some(Overlay::NoteEditor { .. }) => {
             "type text  ⇧⏎/Ctrl+J newline  ⏎ save  Esc cancel  Backspace erase"
         }
-        None => "←↑↓→ move  ⏎ open  n note  x clear  q quit",
+        None => "←↑↓→ move  ⏎ open  q quit",
     };
 
     let lines = vec![

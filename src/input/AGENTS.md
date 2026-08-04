@@ -51,10 +51,10 @@ Each physical key maps to exactly one IR, regardless of state:
 | (tick timeout)    | `Tick`         |
 
 Notes:
-- Letters that are also commands (`n`, `N`, `x`, `q`) arrive as
-  `Char(c)` — `input` does not special-case them; the controller decides whether
-  a `Char('q')` means quit (base view) or literal text (note editor). This is the
-  whole point of the IR: no task categorization here.
+- Letters that are also commands (`q`) arrive as `Char(c)` — `input` does not
+  special-case them; the controller decides whether a `Char('q')` means quit
+  (base view) or literal text (note editor). This is the whole point of the IR:
+  no task categorization here.
 - Anything with no mapping produces no IR (and thus no `Action`).
 
 ### IR → Action
@@ -86,15 +86,14 @@ The controller then resolves context into an effect, e.g.:
 - `Cancel` → discard inside an overlay, or be ignored / handled by shell logic
   on the base matrix.
 - `Digit(n)` → pick category `n` in the picker, ignored elsewhere.
-- `Char('n')`/`Char('x')`/`Char('q')` → note / clear / quit on a base view;
-  literal text inside the note editor.
+- `Char('q')` → quit on a base view; literal text inside the note editor.
 
 This means the `Action` enum carries neutral IR-style variants (`Confirm`,
 `InsertNewline`, `Cancel`, `Digit`, `Char`, `Erase`, moves, `CycleView`,
 `Tick`) rather than pre-decided effects; see `domain/action.rs` and
 `controller/AGENTS.md` for how each is interpreted.
 
-Because `input` holds no key→command table, the letter-command bindings (`n`/`N`
-note, `x` clear, `q` quit) are **not** documented here — they are just
-`Char(c)` at this layer. Their meaning lives with the code that owns it: the
-state-transition rules in `controller/AGENTS.md`.
+Because `input` holds no key→command table, the letter-command binding (`q`
+quit) is **not** documented here — it is just `Char(c)` at this layer. Its
+meaning lives with the code that owns it: the state-transition rules in
+`controller/AGENTS.md`.

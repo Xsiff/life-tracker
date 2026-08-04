@@ -190,12 +190,6 @@ impl Controller {
                 });
             }
             Action::CycleView => {}
-            Action::Char('n') | Action::Char('N') => {
-                self.open_note_editor_for_focus();
-            }
-            Action::Char('x') | Action::Char('X') => {
-                self.clear_focused_value()?;
-            }
             Action::Char('q') | Action::Char('Q') => self.state.quit = true,
             Action::Tick
             | Action::Cancel
@@ -212,19 +206,6 @@ impl Controller {
             move_cursor_hour(self.state.cursor.date, self.state.cursor.hour, delta);
         self.state.cursor.date = date;
         self.state.cursor.hour = hour;
-    }
-
-    fn open_note_editor_for_focus(&mut self) {
-        let target = match self.state.cursor.hour {
-            Some(hour) => NoteTarget::Hour {
-                date: self.state.cursor.date,
-                hour,
-            },
-            None => NoteTarget::Day {
-                date: self.state.cursor.date,
-            },
-        };
-        self.open_note_editor(target);
     }
 
     fn open_note_editor(&mut self, target: NoteTarget) {
@@ -361,12 +342,6 @@ impl Controller {
         Ok(())
     }
 
-    fn clear_focused_value(&mut self) -> anyhow::Result<()> {
-        match self.state.cursor.hour {
-            Some(hour) => self.clear_hour(self.state.cursor.date, hour),
-            None => self.clear_day_note(self.state.cursor.date),
-        }
-    }
 }
 
 fn ensure_day(days: &mut BTreeMap<NaiveDate, Day>, date: NaiveDate) -> &mut Day {
