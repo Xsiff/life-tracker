@@ -88,7 +88,7 @@ fn build_grid_lines(
         if active_month != Some((date.year(), date.month())) {
             active_month = Some((date.year(), date.month()));
             lines.push(Line::from(Span::styled(
-                format!("**{} {}**", date.format("%B"), date.year()),
+                format!("{} {}", date.format("%B"), date.year()),
                 theme::month_header_style(),
             )));
             lines.push(Line::raw(build_rule_line('═', '╪', visible_hours.len())));

@@ -28,6 +28,8 @@ copy.
   scenes for real terminal inspection.
 - **`calendar_view.rs`** — the main matrix: columns are `00.00..23.00`, rows are
   sequential dates, and month headers split the timeline into readable blocks.
+  Month labels are rendered as bold text in the terminal, not wrapped in
+  literal markdown markers.
   Each populated hour cell shows the category digit in its category color; noted
   cells add `*`. The date column shows the date with an abbreviated weekday
   (e.g., `02.08.2026 Sat`), with a single `*` appended after the weekday when the
