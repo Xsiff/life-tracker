@@ -75,7 +75,10 @@ Field-level bodies live in `state.rs`; this doc is the meaning + rules.
   the target, selection, and stored value unchanged.
   Arrow keys move the note cursor inside the editor: left/right move by
   character, and up/down move between lines while preserving the column when
-  possible.
+  possible. `Option/Alt+←` and `Option/Alt+→` move by word/chunk inside the
+  note editor and are ignored outside it. `Option/Alt+Delete` or
+  `Option/Alt+Backspace` deletes the previous word/chunk inside the note
+  editor and is ignored outside it.
 - **Routing rule:** if `overlay.is_some()`, the overlay interprets the action;
   otherwise the active `ViewMode` does. Do not add a `Screen` enum alongside
   `ViewMode` — that would duplicate "which view am I in" and let them drift.
@@ -111,6 +114,11 @@ effect by the current base state + `Overlay`.
   `NoteEditor`, move the text cursor through the draft instead of moving the
   matrix focus. Left/right move by character, up/down move between lines with
   column clamping. In the base matrix they still move the focused cell.
+- **`MoveWordLeft` / `MoveWordRight`** — inside the `NoteEditor`, move the text
+  cursor by word/chunk boundaries. The controller ignores them outside note
+  mode.
+- **`DeleteWord`** — inside the `NoteEditor`, deletes the word/chunk to the left
+  of the text cursor. The controller ignores it outside note mode.
 - **`Digit(n)`** — in `CategoryPicker`, selects category `n` (digit →
   discriminant) when `n` maps to a real category; it never targets the
   `AddNote` row. Inside the `NoteEditor`, it inserts the corresponding literal

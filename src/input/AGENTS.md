@@ -38,6 +38,10 @@ Each physical key maps to exactly one IR, regardless of state:
 |-------------------|----------------|
 | ←                 | `Left`         |
 | →                 | `Right`        |
+| Option/Alt+←      | `MoveWordLeft` |
+| Option/Alt+→      | `MoveWordRight` |
+| Option/Alt+Delete | `DeleteWord`   |
+| Option/Alt+Backspace | `DeleteWord` |
 | ↑                 | `Up`           |
 | ↓                 | `Down`         |
 | Enter             | `Confirm`      |
@@ -66,6 +70,9 @@ the controller interprets the `Action` per state.
 |---------------|----------------------|
 | `Left`        | `MoveLeft`           |
 | `Right`       | `MoveRight`          |
+| `MoveWordLeft`  | `MoveWordLeft`     |
+| `MoveWordRight` | `MoveWordRight`    |
+| `DeleteWord`    | `DeleteWord`       |
 | `Up`          | `MoveUp`             |
 | `Down`        | `MoveDown`           |
 | `Confirm`     | `Confirm`            |
@@ -83,14 +90,19 @@ The controller then resolves context into an effect, e.g.:
 - `InsertNewline` → insert a line break inside the note editor, ignored
   elsewhere. In practice, `Ctrl+J` is the reliable terminal path even when
   `Shift+Enter` is collapsed into plain `Enter`.
+- `Option/Alt+←` / `Option/Alt+→` → word-wise motion in the note editor via
+  `MoveWordLeft` / `MoveWordRight`; the controller ignores them outside note
+  mode.
+- `Option/Alt+Delete` and `Option/Alt+Backspace` → delete the previous
+  word/chunk inside the note editor via `DeleteWord`; ignored elsewhere.
 - `Cancel` → discard inside an overlay, or be ignored / handled by shell logic
   on the base matrix.
 - `Digit(n)` → pick category `n` in the picker, ignored elsewhere.
 - `Char('q')` → quit on a base view; literal text inside the note editor.
 
 This means the `Action` enum carries neutral IR-style variants (`Confirm`,
-`InsertNewline`, `Cancel`, `Digit`, `Char`, `Erase`, moves, `CycleView`,
-`Tick`) rather than pre-decided effects; see `domain/action.rs` and
+`InsertNewline`, `Cancel`, `Digit`, `Char`, `Erase`, moves, word moves,
+word delete, `CycleView`, `Tick`) rather than pre-decided effects; see `domain/action.rs` and
 `controller/AGENTS.md` for how each is interpreted.
 
 Because `input` holds no key→command table, the letter-command binding (`q`
