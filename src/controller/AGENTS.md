@@ -73,6 +73,9 @@ Field-level bodies live in `state.rs`; this doc is the meaning + rules.
 - **`NoteEditor` draft:** the draft text + text cursor live in the overlay; the
   draft is not written to storage until a save. `Cancel` discards it and leaves
   the target, selection, and stored value unchanged.
+  Arrow keys move the note cursor inside the editor: left/right move by
+  character, and up/down move between lines while preserving the column when
+  possible.
 - **Routing rule:** if `overlay.is_some()`, the overlay interprets the action;
   otherwise the active `ViewMode` does. Do not add a `Screen` enum alongside
   `ViewMode` — that would duplicate "which view am I in" and let them drift.
@@ -104,6 +107,10 @@ effect by the current base state + `Overlay`.
   it distinctly, and `Ctrl+J` is the reliable fallback. Ignored elsewhere.
 - **`Erase`** — inside the `NoteEditor`, deletes the char before the text cursor;
   ignored elsewhere.
+- **`MoveLeft` / `MoveRight` / `MoveUp` / `MoveDown`** — inside the
+  `NoteEditor`, move the text cursor through the draft instead of moving the
+  matrix focus. Left/right move by character, up/down move between lines with
+  column clamping. In the base matrix they still move the focused cell.
 - **`Digit(n)`** — in `CategoryPicker`, selects category `n` (digit →
   discriminant) when `n` maps to a real category; it never targets the
   `AddNote` row. Inside the `NoteEditor`, it inserts the corresponding literal
