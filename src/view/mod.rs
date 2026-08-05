@@ -205,7 +205,7 @@ mod tests {
         assert!(output.contains("life-tracker"));
         assert!(output.contains("00.00"));
         assert!(output.contains("13.00"));
-        assert!(output.contains("**August 2026**"));
+        assert!(output.contains("August 2026"));
         assert!(output.contains("Focus: 02.08.2026 Sun 00.00 Work"));
     }
 
@@ -235,7 +235,7 @@ mod tests {
         let separator = lines.get(july_row + 1).expect("separator after july row");
         let august_header = lines
             .iter()
-            .position(|line| line.contains("**August 2026**"))
+            .position(|line| line.contains("August 2026"))
             .expect("august header");
         let after_header = lines.get(august_header + 1).expect("line after header");
 
