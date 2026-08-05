@@ -1,14 +1,11 @@
 use ratatui::{
     layout::Rect,
-    style::Style,
     text::{Line, Span},
     widgets::{Block, Borders, Clear, Paragraph},
     Frame,
 };
 
 use crate::controller::{NoteTarget, State};
-
-use super::theme;
 
 pub fn render(
     frame: &mut Frame,
@@ -107,9 +104,5 @@ fn push_wrapped_span(
 }
 
 fn cursor_span() -> Span<'static> {
-    Span::styled("|", cursor_style())
-}
-
-fn cursor_style() -> Style {
-    theme::selected(Style::default())
+    Span::raw("|")
 }

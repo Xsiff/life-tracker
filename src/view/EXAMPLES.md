@@ -227,8 +227,9 @@ Output:
 Legend:
 - The title reflects the target slot.
 - The draft is shown verbatim and is not persisted until save.
-- The visible `|` marker shows the current text cursor. If the stored cursor is
-  past the end of the draft, it is clamped to the end of the text.
+- The visible `|` marker shows the current text cursor as plain text with no
+  highlight. If the stored cursor is past the end of the draft, it is clamped
+  to the end of the text.
 - `Shift+Enter` inserts a new line at the cursor when the terminal reports it
   distinctly; `Ctrl+J` is the reliable fallback. Plain `Enter` saves.
 - Long unbroken note text wraps inside the popup so it never overflows the
