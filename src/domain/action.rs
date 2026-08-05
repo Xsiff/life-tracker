@@ -4,6 +4,9 @@ pub enum Action {
     MoveRight,
     MoveUp,
     MoveDown,
+    MoveWordLeft,
+    MoveWordRight,
+    DeleteWord,
     Confirm,
     InsertNewline,
     Cancel,
@@ -36,6 +39,9 @@ mod tests {
         actions.insert(Action::MoveRight);
         actions.insert(Action::MoveUp);
         actions.insert(Action::MoveDown);
+        actions.insert(Action::MoveWordLeft);
+        actions.insert(Action::MoveWordRight);
+        actions.insert(Action::DeleteWord);
         actions.insert(Action::Confirm);
         actions.insert(Action::InsertNewline);
         actions.insert(Action::Cancel);
@@ -45,7 +51,7 @@ mod tests {
         actions.insert(Action::Erase);
         actions.insert(Action::Tick);
 
-        assert_eq!(actions.len(), 12);
+        assert_eq!(actions.len(), 15);
         assert!(actions.contains(&Action::Digit(3)));
         assert!(actions.contains(&Action::Char('x')));
         assert!(!actions.contains(&Action::Digit(4)));

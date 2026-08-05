@@ -55,6 +55,18 @@ fn next_action(timeout: Duration) -> anyhow::Result<Option<Action>> {
     }
 
     let action = match key.code {
+        KeyCode::Left if key.modifiers.contains(KeyModifiers::ALT) => {
+            Some(Action::MoveWordLeft)
+        }
+        KeyCode::Right if key.modifiers.contains(KeyModifiers::ALT) => {
+            Some(Action::MoveWordRight)
+        }
+        KeyCode::Delete if key.modifiers.contains(KeyModifiers::ALT) => {
+            Some(Action::DeleteWord)
+        }
+        KeyCode::Backspace if key.modifiers.contains(KeyModifiers::ALT) => {
+            Some(Action::DeleteWord)
+        }
         KeyCode::Left => Some(Action::MoveLeft),
         KeyCode::Right => Some(Action::MoveRight),
         KeyCode::Up => Some(Action::MoveUp),

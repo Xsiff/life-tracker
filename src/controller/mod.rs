@@ -155,6 +155,12 @@ impl Controller {
                 erase_char(&mut draft, &mut cursor);
                 self.state.overlay = Some(Overlay::NoteEditor { target, draft, cursor });
             }
+            (Overlay::NoteEditor { target, draft, cursor }, Action::DeleteWord) => {
+                let mut draft = draft;
+                let mut cursor = cursor;
+                erase_word(&mut draft, &mut cursor);
+                self.state.overlay = Some(Overlay::NoteEditor { target, draft, cursor });
+            }
             (Overlay::NoteEditor { target, draft, cursor }, Action::MoveLeft) => {
                 let mut cursor = cursor;
                 move_note_cursor_left(&draft, &mut cursor);
@@ -163,6 +169,16 @@ impl Controller {
             (Overlay::NoteEditor { target, draft, cursor }, Action::MoveRight) => {
                 let mut cursor = cursor;
                 move_note_cursor_right(&draft, &mut cursor);
+                self.state.overlay = Some(Overlay::NoteEditor { target, draft, cursor });
+            }
+            (Overlay::NoteEditor { target, draft, cursor }, Action::MoveWordLeft) => {
+                let mut cursor = cursor;
+                move_note_cursor_word_left(&draft, &mut cursor);
+                self.state.overlay = Some(Overlay::NoteEditor { target, draft, cursor });
+            }
+            (Overlay::NoteEditor { target, draft, cursor }, Action::MoveWordRight) => {
+                let mut cursor = cursor;
+                move_note_cursor_word_right(&draft, &mut cursor);
                 self.state.overlay = Some(Overlay::NoteEditor { target, draft, cursor });
             }
             (Overlay::NoteEditor { target, draft, cursor }, Action::MoveUp) => {
@@ -224,6 +240,9 @@ impl Controller {
             | Action::Cancel
             | Action::InsertNewline
             | Action::Erase
+            | Action::DeleteWord
+            | Action::MoveWordLeft
+            | Action::MoveWordRight
             | Action::Digit(_)
             | Action::Char(_) => {}
         }
@@ -513,6 +532,38 @@ fn erase_char(draft: &mut String, cursor: &mut usize) {
     *cursor = new_cursor;
 }
 
+fn erase_word(draft: &mut String, cursor: &mut usize) {
+    if *cursor == 0 {
+        return;
+    }
+
+    let mut pos = *cursor;
+    while let Some((start, ch)) = prev_char_at(draft, pos) {
+        if !ch.is_whitespace() {
+            break;
+        }
+        pos = start;
+        if pos == 0 {
+            draft.drain(0..*cursor);
+            *cursor = 0;
+            return;
+        }
+    }
+
+    while let Some((start, ch)) = prev_char_at(draft, pos) {
+        if ch.is_whitespace() {
+            break;
+        }
+        pos = start;
+        if pos == 0 {
+            break;
+        }
+    }
+
+    draft.drain(pos..*cursor);
+    *cursor = pos;
+}
+
 fn move_note_cursor_left(draft: &str, cursor: &mut usize) {
     if *cursor == 0 {
         return;
@@ -537,6 +588,73 @@ fn move_note_cursor_right(draft: &str, cursor: &mut usize) {
         .map(|ch| *cursor + ch.len_utf8())
         .unwrap_or(*cursor);
     *cursor = next;
+}
+
+fn move_note_cursor_word_left(draft: &str, cursor: &mut usize) {
+    if *cursor == 0 {
+        return;
+    }
+
+    let mut pos = *cursor;
+    while let Some((start, ch)) = prev_char_at(draft, pos) {
+        if !ch.is_whitespace() {
+            break;
+        }
+        pos = start;
+        if pos == 0 {
+            *cursor = 0;
+            return;
+        }
+    }
+
+    while let Some((start, ch)) = prev_char_at(draft, pos) {
+        if ch.is_whitespace() {
+            break;
+        }
+        pos = start;
+        if pos == 0 {
+            break;
+        }
+    }
+
+    *cursor = pos;
+}
+
+fn move_note_cursor_word_right(draft: &str, cursor: &mut usize) {
+    let mut pos = *cursor;
+    if pos >= draft.len() {
+        return;
+    }
+
+    match next_char_at(draft, pos) {
+        Some((_, ch)) if ch.is_whitespace() => {
+            while let Some((start, ch)) = next_char_at(draft, pos) {
+                if !ch.is_whitespace() {
+                    break;
+                }
+                pos = start + ch.len_utf8();
+                if pos >= draft.len() {
+                    *cursor = draft.len();
+                    return;
+                }
+            }
+        }
+        Some(_) => {
+            while let Some((start, ch)) = next_char_at(draft, pos) {
+                if ch.is_whitespace() {
+                    break;
+                }
+                pos = start + ch.len_utf8();
+                if pos >= draft.len() {
+                    *cursor = draft.len();
+                    return;
+                }
+            }
+        }
+        None => return,
+    }
+
+    *cursor = pos;
 }
 
 fn move_note_cursor_vertical(draft: &str, cursor: &mut usize, delta: i8) {
@@ -566,6 +684,25 @@ fn move_note_cursor_vertical(draft: &str, cursor: &mut usize, delta: i8) {
 
 fn byte_to_char_index(draft: &str, byte_idx: usize) -> usize {
     draft[..byte_idx.min(draft.len())].chars().count()
+}
+
+fn prev_char_at(draft: &str, idx: usize) -> Option<(usize, char)> {
+    if idx == 0 {
+        return None;
+    }
+
+    draft[..idx].char_indices().last()
+}
+
+fn next_char_at(draft: &str, idx: usize) -> Option<(usize, char)> {
+    if idx >= draft.len() {
+        return None;
+    }
+
+    draft[idx..]
+        .char_indices()
+        .next()
+        .map(|(rel_idx, ch)| (idx + rel_idx, ch))
 }
 
 fn char_index_to_line_col(chars: &[char], char_idx: usize) -> (usize, usize) {
@@ -625,8 +762,9 @@ mod tests {
     use crate::{domain::Action, storage::Store};
 
     use super::{
-        insert_char, move_cursor_hour, move_note_cursor_left, move_note_cursor_right,
-        move_note_cursor_vertical, Controller, Overlay,
+        erase_word, insert_char, move_cursor_hour, move_note_cursor_left,
+        move_note_cursor_right, move_note_cursor_vertical, move_note_cursor_word_left,
+        move_note_cursor_word_right, Controller, Overlay,
     };
 
     #[test]
@@ -693,6 +831,39 @@ mod tests {
         let mut cursor = 1usize;
         move_note_cursor_vertical(draft, &mut cursor, 1);
         assert_eq!(cursor, "ab\nc".len());
+    }
+
+    #[test]
+    fn note_cursor_moves_by_word_left_and_right() {
+        let draft = "alpha beta  gamma";
+
+        let mut cursor = draft.len();
+        move_note_cursor_word_left(draft, &mut cursor);
+        assert_eq!(cursor, "alpha beta  ".len());
+
+        move_note_cursor_word_left(draft, &mut cursor);
+        assert_eq!(cursor, "alpha ".len());
+
+        let mut cursor = "alpha".len();
+        move_note_cursor_word_right(draft, &mut cursor);
+        assert_eq!(cursor, "alpha ".len());
+
+        move_note_cursor_word_right(draft, &mut cursor);
+        assert_eq!(cursor, "alpha beta".len());
+    }
+
+    #[test]
+    fn delete_word_removes_previous_chunk_and_leaves_cursor_at_boundary() {
+        let mut draft = String::from("alpha beta  gamma");
+        let mut cursor = draft.len();
+
+        erase_word(&mut draft, &mut cursor);
+        assert_eq!(draft, "alpha beta  ");
+        assert_eq!(cursor, "alpha beta  ".len());
+
+        erase_word(&mut draft, &mut cursor);
+        assert_eq!(draft, "alpha ");
+        assert_eq!(cursor, "alpha ".len());
     }
 
     #[test]
