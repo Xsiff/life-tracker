@@ -216,7 +216,7 @@ Output:
 ```text
         ┌ Note - 13:00 Work ─────────┐
         │ Sprint planning, blocked   │
-        │ on API keys.█              │
+        │ on API keys.|              │
         │                            │
         │                            │
         │ ⇧⏎ newline  ⏎ save         │
@@ -227,7 +227,7 @@ Output:
 Legend:
 - The title reflects the target slot.
 - The draft is shown verbatim and is not persisted until save.
-- The visible `█` marker shows the current text cursor as plain text with no
+- The visible `|` marker shows the current text cursor as plain text with no
   highlight. If the stored cursor is past the end of the draft, it is clamped
   to the end of the text.
 - `Shift+Enter` inserts a new line at the cursor when the terminal reports it

@@ -54,9 +54,9 @@ copy.
   with its digit and a short description. `Esc` or `Enter` closes it.
 - **`note_editor.rs`** — popup text box showing the `NoteEditor` draft + text
   cursor; title reflects the `NoteTarget` (day or hour). The current cursor
-  position is rendered as a raw block `█` with no extra highlight or reverse
-  video. `Shift+Enter` inserts a line break when the terminal reports it
-  distinctly, `Ctrl+J` is the reliable fallback, and plain `Enter` still saves.
+  position is rendered as a raw `|` with no extra highlight or reverse video.
+  `Shift+Enter` inserts a line break when the terminal reports it distinctly,
+  `Ctrl+J` is the reliable fallback, and plain `Enter` still saves.
   Arrow keys move the text cursor within the draft (`Left`/`Right` by
   character, `Up`/`Down` between lines with column clamping). `Option/Alt+Left`
   and `Option/Alt+Right` jump by word/chunk. `Option/Alt+Delete` and
