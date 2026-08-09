@@ -124,3 +124,31 @@ cargo clippy
 ```
 
 For the detailed architecture and module contracts, see [AGENTS.md](AGENTS.md).
+
+## Merge Bot
+
+This repo includes a simple branch watcher plus an agent prompt template:
+
+- [`docs/merge-bot-agent.md`](/Users/mozsoy/life-tracker/docs/merge-bot-agent.md)
+- [`scripts/merge_bot_watch.sh`](/Users/mozsoy/life-tracker/scripts/merge_bot_watch.sh)
+
+The watcher polls local branches, filters them by name, and hands a merge prompt
+to whatever agent command you configure.
+Use shell-style glob patterns in `MERGE_BOT_WATCH_PATTERNS` if you want to
+watch branch families like `frontend/*` or `action/*`.
+
+Basic usage:
+
+```bash
+chmod +x scripts/merge_bot_watch.sh
+MERGE_BOT_WATCH_PATTERNS='frontend action controller domain' \
+MERGE_BOT_TARGET_BRANCH=integration \
+MERGE_BOT_AGENT=codex \
+MERGE_BOT_MODEL='gpt-5.4-mini' \
+MERGE_BOT_EFFORT=medium \
+MERGE_BOT_COMMAND='your-agent-cli --prompt-file -' \
+./scripts/merge_bot_watch.sh
+```
+
+If you do not set `MERGE_BOT_COMMAND`, the watcher prints the generated prompt
+instead of invoking an agent.
