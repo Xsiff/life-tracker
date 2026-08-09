@@ -1,0 +1,25 @@
+Merge request context
+
+Repository: /Users/mozsoy/.herdr/worktrees/life-tracker/integration
+Agent spec: docs/merge-bot-agent.md
+Agent: codex
+Model: gpt-5.4-mini
+Reasoning effort: medium
+Target branch: integration
+Source branch: domain
+Previous commit: unknown
+Current commit: 18f59db62bf0d21ce7005b4c73a59174a3703751
+
+What changed:
+
+
+Recent commits:
+
+
+Task:
+- Decide whether this branch should be merged into integration.
+- Resolve any merge conflicts only if the resolution is obvious from the code
+  and existing project conventions.
+- Run the repository's relevant checks if you can do so from the current
+  environment.
+- Leave the repository in a clean state and report the final merge status.

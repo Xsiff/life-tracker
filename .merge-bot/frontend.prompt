@@ -1,0 +1,32 @@
+Merge request context
+
+Repository: /Users/mozsoy/.herdr/worktrees/life-tracker/integration
+Agent spec: docs/merge-bot-agent.md
+Agent: codex
+Model: gpt-5.4-mini
+Reasoning effort: medium
+Target branch: integration
+Source branch: frontend
+Previous commit: 18f59db62bf0d21ce7005b4c73a59174a3703751
+Current commit: f6ed93a492dff76137d68dee5f9559d8e277950a
+
+What changed:
+ src/app.rs           |  0
+ src/event.rs         |  0
+ src/input/mod.rs     | 63 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ src/main.rs          | 65 +++-------------------------------------------------
+ src/view/AGENTS.md   |  6 ++---
+ src/view/EXAMPLES.md |  4 ++--
+ src/view/mod.rs      |  2 +-
+ 7 files changed, 72 insertions(+), 68 deletions(-)
+
+Recent commits:
+f6ed93a (frontend) unnecessary files deleted
+
+Task:
+- Decide whether this branch should be merged into integration.
+- Resolve any merge conflicts only if the resolution is obvious from the code
+  and existing project conventions.
+- Run the repository's relevant checks if you can do so from the current
+  environment.
+- Leave the repository in a clean state and report the final merge status.
