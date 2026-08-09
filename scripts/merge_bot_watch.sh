@@ -18,6 +18,11 @@ agent_name="${MERGE_BOT_AGENT:-codex}"
 agent_model="${MERGE_BOT_MODEL:-gpt-5.4-mini}"
 agent_effort="${MERGE_BOT_EFFORT:-medium}"
 agent_command="${MERGE_BOT_COMMAND:-}"
+agent_sandbox="${MERGE_BOT_SANDBOX:-workspace-write}"
+agent_approval="${MERGE_BOT_APPROVAL:-never}"
+herdr_workspace="${MERGE_BOT_HERDR_WORKSPACE:-${HERDR_WORKSPACE_ID:-}}"
+herdr_tab_prefix="${MERGE_BOT_HERDR_TAB_PREFIX:-merge-bot}"
+codex_bin="${MERGE_BOT_CODEX_BIN:-codex}"
 
 mkdir -p "$state_dir"
 touch "$state_file"
@@ -79,13 +84,136 @@ Task:
 EOF
 }
 
+shell_quote() {
+  printf '%q' "$1"
+}
+
+sanitize_name() {
+  local raw="$1"
+  local sanitized
+
+  sanitized="$(printf '%s' "$raw" | tr -c '[:alnum:]_-' '_')"
+  sanitized="${sanitized##_}"
+  sanitized="${sanitized%%_}"
+  printf '%s' "${sanitized:-merge_bot}"
+}
+
+run_codex_in_herdr() {
+  local branch="$1"
+  local prompt_file="$2"
+  local log_file message_file branch_slug tab_label
+  local effort_config output_file output_safe exit_file exit_safe message_safe
+  local status_file status_safe child_cmd tab_json tab_id agent_json agent_target
+  local tab_create_cmd agent_start_cmd close_cmd waited_seconds
+
+  if ! command -v herdr >/dev/null 2>&1; then
+    echo "merge-bot: herdr is required when MERGE_BOT_COMMAND is unset" >&2
+    return 1
+  fi
+
+  if ! command -v "$codex_bin" >/dev/null 2>&1; then
+    echo "merge-bot: codex binary '$codex_bin' was not found" >&2
+    return 1
+  fi
+
+  if [[ -z "$herdr_workspace" ]]; then
+    echo "merge-bot: no active herdr workspace found; set MERGE_BOT_HERDR_WORKSPACE or run inside herdr" >&2
+    return 1
+  fi
+
+  branch_slug="$(sanitize_name "$branch")"
+  tab_label="${herdr_tab_prefix}-${branch_slug}"
+  log_file="$state_dir/${branch//\//_}.log"
+  message_file="$state_dir/${branch//\//_}.last-message.txt"
+  output_file="$state_dir/${branch//\//_}.codex.stdout"
+  exit_file="$state_dir/${branch//\//_}.exit"
+  status_file="$state_dir/${branch//\//_}.status"
+  effort_config="model_reasoning_effort=\"$agent_effort\""
+
+  output_safe="$(shell_quote "$output_file")"
+  exit_safe="$(shell_quote "$exit_file")"
+  message_safe="$(shell_quote "$message_file")"
+  status_safe="$(shell_quote "$status_file")"
+  rm -f "$output_file" "$exit_file" "$status_file"
+
+  tab_create_cmd=(
+    herdr tab create
+    --workspace "$herdr_workspace"
+    --cwd "$worktree_root"
+    --label "$tab_label"
+    --no-focus
+  )
+  tab_json="$("${tab_create_cmd[@]}")"
+  tab_id="$(printf '%s' "$tab_json" | sed -n 's/.*"tab_id":"\([^"]*\)".*/\1/p' | head -n 1)"
+
+  if [[ -z "$tab_id" ]]; then
+    echo "merge-bot: failed to create herdr tab for $branch" >&2
+    return 1
+  fi
+
+  child_cmd="$codex_bin exec --cd $(shell_quote "$worktree_root") --model $(shell_quote "$agent_model") --sandbox $(shell_quote "$agent_sandbox") --ask-for-approval $(shell_quote "$agent_approval") --color never --output-last-message $message_safe -c $(shell_quote "$effort_config") - < $(shell_quote "$prompt_file") > $output_safe 2>&1; status=\$?; printf '%s\n' \"\$status\" > $exit_safe; exit \$status"
+
+  agent_start_cmd=(
+    herdr agent start "$tab_label"
+    --workspace "$herdr_workspace"
+    --tab "$tab_id"
+    --cwd "$worktree_root"
+    --no-focus
+    --
+    /bin/zsh -lc "$child_cmd"
+  )
+  agent_json="$("${agent_start_cmd[@]}")"
+  agent_target="$(printf '%s' "$agent_json" | sed -n 's/.*"pane_id":"\([^"]*\)".*/\1/p' | head -n 1)"
+  if [[ -z "$agent_target" ]]; then
+    agent_target="$(printf '%s' "$agent_json" | sed -n 's/.*"agent_id":"\([^"]*\)".*/\1/p' | head -n 1)"
+  fi
+
+  if [[ -z "$agent_target" ]]; then
+    herdr tab close "$tab_id" >/dev/null 2>&1 || true
+    echo "merge-bot: failed to start herdr agent for $branch" >&2
+    return 1
+  fi
+
+  waited_seconds=0
+  while [[ ! -f "$exit_file" ]]; do
+    sleep 1
+    waited_seconds=$((waited_seconds + 1))
+    if (( waited_seconds >= 3600 )); then
+      herdr tab close "$tab_id" >/dev/null 2>&1 || true
+      echo "merge-bot: herdr agent timed out for $branch" >&2
+      return 1
+    fi
+  done
+
+  close_cmd=(herdr tab close "$tab_id")
+  "${close_cmd[@]}" >/dev/null
+
+  if [[ -f "$output_file" ]]; then
+    mv "$output_file" "$log_file"
+  fi
+
+  if [[ ! -f "$exit_file" ]]; then
+    echo "merge-bot: missing herdr agent exit file for $branch" >&2
+    return 1
+  fi
+
+  printf '%s\n' "$(cat "$exit_file")" > "$status_file"
+
+  if [[ "$(cat "$exit_file")" != "0" ]]; then
+    echo "merge-bot: codex run failed for $branch; see $log_file" >&2
+    return 1
+  fi
+
+  return 0
+}
+
 run_agent() {
-  local prompt_file="$1"
+  local branch="$1"
+  local prompt_file="$2"
 
   if [[ -z "$agent_command" ]]; then
-    echo "merge-bot: no MERGE_BOT_COMMAND configured; prompt written to $prompt_file" >&2
-    cat "$prompt_file"
-    return 0
+    run_codex_in_herdr "$branch" "$prompt_file"
+    return $?
   fi
 
   bash -lc "$agent_command" < "$prompt_file"
@@ -112,7 +240,7 @@ while true; do
     prompt_file="$state_dir/${branch//\//_}.prompt"
     build_prompt "$branch" "$old_sha" "$sha" > "$prompt_file"
     echo "merge-bot: branch update detected on $branch" >&2
-    run_agent "$prompt_file"
+    run_agent "$branch" "$prompt_file"
     printf '%s\t%s\n' "$branch" "$sha" >> "$next_state"
   done < "$current_state"
 

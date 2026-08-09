@@ -133,7 +133,7 @@ This repo includes a simple branch watcher plus an agent prompt template:
 - [`scripts/merge_bot_watch.sh`](/Users/mozsoy/life-tracker/scripts/merge_bot_watch.sh)
 
 The watcher polls local branches, filters them by name, and hands a merge prompt
-to whatever agent command you configure.
+to a merge agent.
 Use shell-style glob patterns in `MERGE_BOT_WATCH_PATTERNS` if you want to
 watch branch families like `frontend/*` or `action/*`.
 
@@ -146,9 +146,18 @@ MERGE_BOT_TARGET_BRANCH=integration \
 MERGE_BOT_AGENT=codex \
 MERGE_BOT_MODEL='gpt-5.4-mini' \
 MERGE_BOT_EFFORT=medium \
-MERGE_BOT_COMMAND='your-agent-cli --prompt-file -' \
 ./scripts/merge_bot_watch.sh
 ```
 
-If you do not set `MERGE_BOT_COMMAND`, the watcher prints the generated prompt
-instead of invoking an agent.
+When `MERGE_BOT_COMMAND` is unset, the watcher now uses Herdr directly:
+
+- It creates a temporary Herdr tab for the changed branch.
+- It starts `codex exec` in that tab with `gpt-5.4-mini` and medium effort by default.
+- It waits for Codex to finish, closes the tab, and then returns to polling branches.
+
+Useful overrides:
+
+- `MERGE_BOT_HERDR_WORKSPACE` chooses the Herdr workspace when the watcher is not running inside the desired Herdr pane.
+- `MERGE_BOT_HERDR_TAB_PREFIX` changes the temporary tab label prefix.
+- `MERGE_BOT_SANDBOX` and `MERGE_BOT_APPROVAL` control the default `codex exec` sandbox/approval settings.
+- `MERGE_BOT_COMMAND` still overrides the built-in Herdr/Codex runner entirely if you want a custom agent command.
