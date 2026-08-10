@@ -107,7 +107,7 @@ effect by the current base state + `Overlay`.
   the main loop). Inside the `NoteEditor`, `Char(c)` inserts literal text.
 - **`InsertNewline`** — inside the `NoteEditor`, inserts a line break at the
   current text cursor. This is the `Shift+Enter` path when the terminal reports
-  it distinctly, and `Ctrl+J` is the reliable fallback. Ignored elsewhere.
+  it distinctly. Ignored elsewhere.
 - **`Erase`** — inside the `NoteEditor`, deletes the char before the text cursor;
   ignored elsewhere.
 - **`MoveLeft` / `MoveRight` / `MoveUp` / `MoveDown`** — inside the

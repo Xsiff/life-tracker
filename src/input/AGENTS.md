@@ -27,8 +27,8 @@ physical key ──▶ InputIR ──▶ Action ──▶ (controller decides me
 The IR is intentionally effect-free: plain `Enter` is `Confirm`, and a note
 newline is `InsertNewline`, never "OpenCellPopup" or "InsertLineBreakInNote".
 That newline IR is produced from `Shift+Enter` when the terminal reports it
-distinctly, and from `Ctrl+J` as the reliable fallback. This keeps `input`
-stateless and keeps one physical key from needing N task-specific branches.
+distinctly. This keeps `input` stateless and keeps one physical key from
+needing N task-specific branches.
 
 ### Key → IR
 
@@ -46,7 +46,6 @@ Each physical key maps to exactly one IR, regardless of state:
 | ↓                 | `Down`         |
 | Enter             | `Confirm`      |
 | Shift+Enter       | `InsertNewline`|
-| Ctrl+J            | `InsertNewline`|
 | Esc               | `Cancel`       |
 | Tab               | `Cycle`        |
 | `0`–`9`           | `Digit(u8)`    |
@@ -88,8 +87,8 @@ The controller then resolves context into an effect, e.g.:
 - `Confirm` → open the category picker for the focused matrix cell, or commit
   inside an overlay.
 - `InsertNewline` → insert a line break inside the note editor, ignored
-  elsewhere. In practice, `Ctrl+J` is the reliable terminal path even when
-  `Shift+Enter` is collapsed into plain `Enter`.
+  elsewhere. It comes from `Shift+Enter` when the terminal reports it
+  distinctly.
 - `Option/Alt+←` / `Option/Alt+→` → word-wise motion in the note editor via
   `MoveWordLeft` / `MoveWordRight`; the controller ignores them outside note
   mode.

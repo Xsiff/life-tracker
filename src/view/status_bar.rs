@@ -21,7 +21,7 @@ pub fn render(frame: &mut Frame, area: Rect, state: &State, now: &DateTime<Local
             NoteTarget::Hour { .. } => "↑↓ move  0-9 select  ⏎ confirm  Esc cancel",
         },
         Some(Overlay::NoteEditor { .. }) => {
-            "type text  ⇧⏎/Ctrl+J newline  ⏎ save  Esc cancel  Backspace erase"
+            "type text  ⇧⏎ newline  ⏎ save  Esc cancel  Backspace erase"
         }
         Some(Overlay::Help) => "read-only help  Esc/⏎ close",
         None => "←↑↓→ move  ⏎ open  ? help  q quit",

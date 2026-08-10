@@ -50,9 +50,6 @@ fn action_for_key(key: KeyEvent) -> Option<Action> {
         KeyCode::Tab => Some(Action::CycleView),
         KeyCode::Backspace => Some(Action::Erase),
         KeyCode::Char(c) if c.is_ascii_digit() => Some(Action::Digit(c as u8 - b'0')),
-        KeyCode::Char('j') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-            Some(Action::InsertNewline)
-        }
         KeyCode::Char(c) => {
             if key.modifiers.contains(KeyModifiers::CONTROL) {
                 None
@@ -74,13 +71,6 @@ mod tests {
     #[test]
     fn shift_enter_maps_to_insert_newline() {
         let key = KeyEvent::new(KeyCode::Enter, KeyModifiers::SHIFT);
-
-        assert_eq!(action_for_key(key), Some(Action::InsertNewline));
-    }
-
-    #[test]
-    fn ctrl_j_maps_to_insert_newline() {
-        let key = KeyEvent::new(KeyCode::Char('j'), KeyModifiers::CONTROL);
 
         assert_eq!(action_for_key(key), Some(Action::InsertNewline));
     }
