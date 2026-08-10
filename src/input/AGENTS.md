@@ -93,7 +93,7 @@ The controller then resolves context into an effect, e.g.:
   `MoveWordLeft` / `MoveWordRight`; the controller ignores them outside note
   mode.
 - `Option/Alt+Delete` and `Option/Alt+Backspace` → delete the previous
-  word/chunk inside the note editor via `DeleteWord`; ignored elsewhere.
+  word boundary inside the note editor via `DeleteWord`; ignored elsewhere.
 - `Cancel` → discard inside an overlay, or be ignored / handled by shell logic
   on the base matrix.
 - `Digit(n)` → pick category `n` in the picker, ignored elsewhere.

@@ -235,10 +235,10 @@ Legend:
   the draft, it is clamped to the end of the text.
 - `Shift+Enter` inserts a new line at the cursor when the terminal reports it
   distinctly. `Ctrl+J` is the reliable fallback. Plain `Enter` saves.
-- `Option/Alt+←` and `Option/Alt+→` move the cursor by word/chunk inside the
-  note editor.
-- `Option/Alt+Delete` and `Option/Alt+Backspace` delete the previous
-  word/chunk inside the note editor.
+- `Option/Alt+←` and `Option/Alt+→` move the cursor to the previous/next word
+  boundary inside the note editor.
+- `Option/Alt+Delete` and `Option/Alt+Backspace` delete the previous word
+  boundary inside the note editor.
 - Long unbroken note text wraps inside the popup so it never overflows the
   editor window.
 - The editor is anchored beside the focused cell instead of being centered.

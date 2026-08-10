@@ -76,7 +76,8 @@ Field-level bodies live in `state.rs`; this doc is the meaning + rules.
   Arrow keys move the note cursor inside the editor: left/right move by
   character, and up/down move between lines while preserving the column when
   possible. `Option/Alt+←` and `Option/Alt+→` move by word/chunk inside the
-  note editor and are ignored outside it. `Option/Alt+Delete` or
+  note editor, jumping to the previous or next word boundary like a terminal
+  text field, and are ignored outside it. `Option/Alt+Delete` or
   `Option/Alt+Backspace` deletes the previous word/chunk inside the note
   editor and is ignored outside it.
 - **Routing rule:** if `overlay.is_some()`, the overlay interprets the action;
@@ -115,8 +116,9 @@ effect by the current base state + `Overlay`.
   matrix focus. Left/right move by character, up/down move between lines with
   column clamping. In the base matrix they still move the focused cell.
 - **`MoveWordLeft` / `MoveWordRight`** — inside the `NoteEditor`, move the text
-  cursor by word/chunk boundaries. The controller ignores them outside note
-  mode.
+  cursor by terminal-style word boundaries. Left jumps to the previous word
+  boundary; right jumps to the next word boundary. The controller ignores them
+  outside note mode.
 - **`DeleteWord`** — inside the `NoteEditor`, deletes the word/chunk to the left
   of the text cursor. The controller ignores it outside note mode.
 - **`Digit(n)`** — in `CategoryPicker`, selects category `n` (digit →

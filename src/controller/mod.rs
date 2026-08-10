@@ -596,24 +596,27 @@ fn move_note_cursor_word_left(draft: &str, cursor: &mut usize) {
     }
 
     let mut pos = *cursor;
+    let mut saw_word = false;
+
     while let Some((start, ch)) = prev_char_at(draft, pos) {
-        if !ch.is_whitespace() {
-            break;
+        if ch.is_whitespace() {
+            if saw_word {
+                *cursor = pos;
+                return;
+            }
+            pos = start;
+            if pos == 0 {
+                *cursor = 0;
+                return;
+            }
+            continue;
         }
+
+        saw_word = true;
         pos = start;
         if pos == 0 {
             *cursor = 0;
             return;
-        }
-    }
-
-    while let Some((start, ch)) = prev_char_at(draft, pos) {
-        if ch.is_whitespace() {
-            break;
-        }
-        pos = start;
-        if pos == 0 {
-            break;
         }
     }
 
@@ -626,32 +629,27 @@ fn move_note_cursor_word_right(draft: &str, cursor: &mut usize) {
         return;
     }
 
-    match next_char_at(draft, pos) {
-        Some((_, ch)) if ch.is_whitespace() => {
-            while let Some((start, ch)) = next_char_at(draft, pos) {
-                if !ch.is_whitespace() {
-                    break;
-                }
-                pos = start + ch.len_utf8();
-                if pos >= draft.len() {
-                    *cursor = draft.len();
-                    return;
-                }
-            }
+    while let Some((start, ch)) = next_char_at(draft, pos) {
+        pos = start + ch.len_utf8();
+        if ch.is_whitespace() {
+            break;
         }
-        Some(_) => {
-            while let Some((start, ch)) = next_char_at(draft, pos) {
-                if ch.is_whitespace() {
-                    break;
-                }
-                pos = start + ch.len_utf8();
-                if pos >= draft.len() {
-                    *cursor = draft.len();
-                    return;
-                }
-            }
+        if pos >= draft.len() {
+            *cursor = draft.len();
+            return;
         }
-        None => return,
+    }
+
+    while let Some((start, ch)) = next_char_at(draft, pos) {
+        if !ch.is_whitespace() {
+            *cursor = start;
+            return;
+        }
+        pos = start + ch.len_utf8();
+        if pos >= draft.len() {
+            *cursor = draft.len();
+            return;
+        }
     }
 
     *cursor = pos;
@@ -835,35 +833,35 @@ mod tests {
 
     #[test]
     fn note_cursor_moves_by_word_left_and_right() {
-        let draft = "alpha beta  gamma";
+        let draft = "alpha, beta  gamma";
 
         let mut cursor = draft.len();
         move_note_cursor_word_left(draft, &mut cursor);
-        assert_eq!(cursor, "alpha beta  ".len());
+        assert_eq!(cursor, "alpha, beta  ".len());
 
         move_note_cursor_word_left(draft, &mut cursor);
-        assert_eq!(cursor, "alpha ".len());
+        assert_eq!(cursor, "alpha, ".len());
 
-        let mut cursor = "alpha".len();
+        let mut cursor = 0usize;
         move_note_cursor_word_right(draft, &mut cursor);
-        assert_eq!(cursor, "alpha ".len());
+        assert_eq!(cursor, "alpha, ".len());
 
         move_note_cursor_word_right(draft, &mut cursor);
-        assert_eq!(cursor, "alpha beta".len());
+        assert_eq!(cursor, "alpha, beta  ".len());
     }
 
     #[test]
     fn delete_word_removes_previous_chunk_and_leaves_cursor_at_boundary() {
-        let mut draft = String::from("alpha beta  gamma");
+        let mut draft = String::from("alpha, beta  gamma");
         let mut cursor = draft.len();
 
         erase_word(&mut draft, &mut cursor);
-        assert_eq!(draft, "alpha beta  ");
-        assert_eq!(cursor, "alpha beta  ".len());
+        assert_eq!(draft, "alpha, beta  ");
+        assert_eq!(cursor, "alpha, beta  ".len());
 
         erase_word(&mut draft, &mut cursor);
-        assert_eq!(draft, "alpha ");
-        assert_eq!(cursor, "alpha ".len());
+        assert_eq!(draft, "alpha, ");
+        assert_eq!(cursor, "alpha, ".len());
     }
 
     #[test]
