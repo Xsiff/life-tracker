@@ -233,6 +233,8 @@ Legend:
 - The visible `█` marker shows the current text cursor as a block cursor with
   no extra highlight or reverse video. If the stored cursor is past the end of
   the draft, it is clamped to the end of the text.
+- The note text area scrolls to keep the current cursor line visible when the
+  draft is taller than the popup.
 - `Shift+Enter` inserts a new line at the cursor when the terminal reports it
   distinctly. `Ctrl+J` is the reliable fallback. Plain `Enter` saves.
 - `Option/Alt+←` and `Option/Alt+→` move the cursor by word/chunk inside the
