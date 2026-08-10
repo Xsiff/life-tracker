@@ -150,5 +150,6 @@ MERGE_BOT_COMMAND='your-agent-cli --prompt-file -' \
 ./scripts/merge_bot_watch.sh
 ```
 
+
 If you do not set `MERGE_BOT_COMMAND`, the watcher prints the generated prompt
 instead of invoking an agent.
