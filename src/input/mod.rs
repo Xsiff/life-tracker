@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use crossterm::{
-    event::{poll, read, Event, KeyCode, KeyEventKind, KeyModifiers},
+    event::{poll, read, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers},
 };
 
 use crate::domain::Action;
@@ -18,7 +18,11 @@ pub fn next_action(timeout: Duration) -> anyhow::Result<Option<Action>> {
         return Ok(None);
     }
 
-    let action = match key.code {
+    Ok(action_for_key(key))
+}
+
+fn action_for_key(key: KeyEvent) -> Option<Action> {
+    match key.code {
         KeyCode::Left if key.modifiers.contains(KeyModifiers::ALT) => {
             Some(Action::MoveWordLeft)
         }
@@ -57,7 +61,34 @@ pub fn next_action(timeout: Duration) -> anyhow::Result<Option<Action>> {
             }
         }
         _ => None,
-    };
+    }
+}
 
-    Ok(action)
+#[cfg(test)]
+mod tests {
+    use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+
+    use super::action_for_key;
+    use crate::domain::Action;
+
+    #[test]
+    fn shift_enter_maps_to_insert_newline() {
+        let key = KeyEvent::new(KeyCode::Enter, KeyModifiers::SHIFT);
+
+        assert_eq!(action_for_key(key), Some(Action::InsertNewline));
+    }
+
+    #[test]
+    fn ctrl_j_maps_to_insert_newline() {
+        let key = KeyEvent::new(KeyCode::Char('j'), KeyModifiers::CONTROL);
+
+        assert_eq!(action_for_key(key), Some(Action::InsertNewline));
+    }
+
+    #[test]
+    fn plain_enter_maps_to_confirm() {
+        let key = KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE);
+
+        assert_eq!(action_for_key(key), Some(Action::Confirm));
+    }
 }
