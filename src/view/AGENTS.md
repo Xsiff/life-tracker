@@ -55,16 +55,17 @@ copy.
 - **`note_editor.rs`** — popup text box showing the `NoteEditor` draft + text
   cursor; title reflects the `NoteTarget` (day or hour). The current cursor
   position is rendered as a raw block `█` with no extra highlight or reverse
-  video. `Shift+Enter` inserts a line break when the terminal reports it
-  distinctly, `Ctrl+J` is the reliable fallback, and plain `Enter` still saves.
-  Arrow keys move the text cursor within the draft (`Left`/`Right` by
-  character, `Up`/`Down` between lines with column clamping). `Option/Alt+Left`
-  and `Option/Alt+Right` jump by word/chunk. `Option/Alt+Delete` and
-  `Option/Alt+Backspace` delete the previous word/chunk. Like the picker, it
-  anchors to the active cell instead of centering on the screen. The separator
-  above the helper line spans the full inner popup width so the editor reads as
-  one contained window. Draft text wraps to the popup's inner width so long
-  unbroken input never overflows the window.
+  video. The block occupies a full character cell so the cursor reads as a
+  conventional terminal caret. `Shift+Enter` inserts a line break when the
+  terminal reports it distinctly, `Ctrl+J` is the reliable fallback, and plain
+  `Enter` still saves. Arrow keys move the text cursor within the draft
+  (`Left`/`Right` by character, `Up`/`Down` between lines with column clamping).
+  `Option/Alt+Left` and `Option/Alt+Right` jump by word/chunk. `Option/Alt+Delete`
+  and `Option/Alt+Backspace` delete the previous word/chunk. Like the picker,
+  it anchors to the active cell instead of centering on the screen. The
+  separator above the helper line spans the full inner popup width so the
+  editor reads as one contained window. Draft text wraps to the popup's inner
+  width so long unbroken input never overflows the window.
 - **`status_bar.rs`** — shared "now" indicator + current focused slot line.
 - **`theme.rs`** — the single source of category colors:
   `fn color(category: Category) -> ratatui::style::Color`. Every screen pulls

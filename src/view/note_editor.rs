@@ -104,5 +104,5 @@ fn push_wrapped_span(
 }
 
 fn cursor_span() -> Span<'static> {
-    Span::raw("|")
+    Span::raw("█")
 }
