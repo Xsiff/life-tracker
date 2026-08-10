@@ -4,6 +4,7 @@ pub enum Action {
     MoveRight,
     MoveUp,
     MoveDown,
+    Scroll(i32),
     MoveWordLeft,
     MoveWordRight,
     DeleteWord,
@@ -27,8 +28,10 @@ mod tests {
         assert_eq!(Action::Digit(9), Action::Digit(9));
         assert_eq!(Action::Char('q'), Action::Char('q'));
         assert_eq!(Action::Char('N'), Action::Char('N'));
+        assert_eq!(Action::Scroll(3), Action::Scroll(3));
         assert_ne!(Action::Digit(1), Action::Digit(2));
         assert_ne!(Action::Char('n'), Action::Char('N'));
+        assert_ne!(Action::Scroll(1), Action::Scroll(2));
     }
 
     #[test]
@@ -39,6 +42,7 @@ mod tests {
         actions.insert(Action::MoveRight);
         actions.insert(Action::MoveUp);
         actions.insert(Action::MoveDown);
+        actions.insert(Action::Scroll(2));
         actions.insert(Action::MoveWordLeft);
         actions.insert(Action::MoveWordRight);
         actions.insert(Action::DeleteWord);
@@ -51,9 +55,10 @@ mod tests {
         actions.insert(Action::Erase);
         actions.insert(Action::Tick);
 
-        assert_eq!(actions.len(), 15);
+        assert_eq!(actions.len(), 16);
         assert!(actions.contains(&Action::Digit(3)));
         assert!(actions.contains(&Action::Char('x')));
+        assert!(actions.contains(&Action::Scroll(2)));
         assert!(!actions.contains(&Action::Digit(4)));
         assert!(!actions.contains(&Action::Char('q')));
     }
@@ -69,5 +74,10 @@ mod tests {
         let copied_payload = payload;
 
         assert_eq!(payload, copied_payload);
+
+        let scroll = Action::Scroll(-2);
+        let copied_scroll = scroll;
+
+        assert_eq!(scroll, copied_scroll);
     }
 }

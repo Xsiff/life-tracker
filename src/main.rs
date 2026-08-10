@@ -10,7 +10,10 @@ use anyhow::Context;
 use controller::Controller;
 use crossterm::{
     execute,
-    event::{KeyboardEnhancementFlags, PopKeyboardEnhancementFlags, PushKeyboardEnhancementFlags},
+    event::{
+        DisableMouseCapture, EnableMouseCapture, KeyboardEnhancementFlags,
+        PopKeyboardEnhancementFlags, PushKeyboardEnhancementFlags,
+    },
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use ratatui::{backend::CrosstermBackend, Terminal};
@@ -45,7 +48,7 @@ fn run(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> anyhow::Result<
 fn setup_terminal() -> anyhow::Result<(Terminal<CrosstermBackend<io::Stdout>>, bool)> {
     enable_raw_mode()?;
     let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen)?;
+    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
     let keyboard_enhancement_enabled = enable_keyboard_enhancement(&mut stdout);
     let backend = CrosstermBackend::new(stdout);
     Ok((Terminal::new(backend)?, keyboard_enhancement_enabled))
@@ -59,7 +62,7 @@ fn restore_terminal(
         let _ = execute!(terminal.backend_mut(), PopKeyboardEnhancementFlags);
     }
     disable_raw_mode()?;
-    execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+    execute!(terminal.backend_mut(), LeaveAlternateScreen, DisableMouseCapture)?;
     terminal.show_cursor()?;
     Ok(())
 }
