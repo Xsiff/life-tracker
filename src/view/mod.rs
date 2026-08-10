@@ -418,6 +418,43 @@ mod tests {
     }
 
     #[test]
+    fn scrolls_note_editor_to_keep_cursor_visible() {
+        let mut days = BTreeMap::new();
+        let day_date = date(2026, 8, 2);
+        let mut day = Day::new(day_date);
+        day.set_hour(13, Activity::new(Category::Work));
+        days.insert(day_date, day);
+
+        let draft = (1..=18)
+            .map(|n| format!("line {n:02}"))
+            .collect::<Vec<_>>()
+            .join("\n");
+
+        let state = State {
+            cursor: Cursor {
+                date: date(2026, 8, 2),
+                hour: Some(13),
+            },
+            overlay: Some(Overlay::NoteEditor {
+                target: NoteTarget::Hour {
+                    date: date(2026, 8, 2),
+                    hour: 13,
+                },
+                draft,
+                cursor: 126,
+            }),
+            days,
+            last_error: None,
+            quit: false,
+        };
+
+        let output = render_to_string(&state, 46, 16);
+        assert!(output.contains("█"));
+        assert!(output.contains("line 17"));
+        assert!(output.contains("line 18"));
+    }
+
+    #[test]
     fn renders_help_popup_overlay() {
         let state = State {
             cursor: Cursor {

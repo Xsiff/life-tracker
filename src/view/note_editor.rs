@@ -22,14 +22,40 @@ pub fn render(
     let inner = block.inner(area);
     frame.render_widget(block, area);
 
-    let mut lines = draft_lines_with_cursor(draft, cursor, inner.width as usize);
-    while lines.len() < inner.height.saturating_sub(2) as usize {
-        lines.push(Line::raw(""));
-    }
-    lines.push(Line::raw(separator_line(inner.width)));
-    lines.push(Line::raw("⏎ save   Esc cancel"));
+    let footer_height = 2u16.min(inner.height);
+    let text_height = inner.height.saturating_sub(footer_height);
+    let text_area = Rect {
+        x: inner.x,
+        y: inner.y,
+        width: inner.width,
+        height: text_height,
+    };
+    let footer_area = Rect {
+        x: inner.x,
+        y: inner.y + text_height,
+        width: inner.width,
+        height: footer_height,
+    };
 
-    frame.render_widget(Paragraph::new(lines), inner);
+    let (lines, cursor_line) = draft_lines_with_cursor(draft, cursor, inner.width as usize);
+    if text_area.height > 0 {
+        let max_scroll = lines.len().saturating_sub(text_area.height as usize);
+        let scroll = cursor_line
+            .saturating_sub(text_area.height as usize / 2)
+            .min(max_scroll);
+        frame.render_widget(
+            Paragraph::new(lines).scroll((scroll as u16, 0)),
+            text_area,
+        );
+    }
+
+    if footer_area.height > 0 {
+        let mut footer_lines = vec![Line::raw(separator_line(footer_area.width))];
+        if footer_area.height > 1 {
+            footer_lines.push(Line::raw("⏎ save   Esc cancel"));
+        }
+        frame.render_widget(Paragraph::new(footer_lines), footer_area);
+    }
 }
 
 fn separator_line(width: u16) -> String {
@@ -49,18 +75,20 @@ fn title(state: &State, target: &NoteTarget) -> String {
     }
 }
 
-fn draft_lines_with_cursor(draft: &str, cursor: usize, width: usize) -> Vec<Line<'static>> {
+fn draft_lines_with_cursor(draft: &str, cursor: usize, width: usize) -> (Vec<Line<'static>>, usize) {
     if width == 0 {
-        return vec![];
+        return (vec![], 0);
     }
 
     let chars: Vec<char> = draft.chars().collect();
     let cursor = cursor.min(chars.len());
     let mut lines = vec![Vec::<Span<'static>>::new()];
     let mut line_width = 0usize;
+    let mut cursor_line = 0usize;
 
     for (index, ch) in chars.iter().enumerate() {
         if index == cursor {
+            cursor_line = lines.len().saturating_sub(1);
             push_wrapped_span(&mut lines, &mut line_width, cursor_span(), width);
         }
 
@@ -79,10 +107,11 @@ fn draft_lines_with_cursor(draft: &str, cursor: usize, width: usize) -> Vec<Line
     }
 
     if cursor == chars.len() {
+        cursor_line = lines.len().saturating_sub(1);
         push_wrapped_span(&mut lines, &mut line_width, cursor_span(), width);
     }
 
-    lines.into_iter().map(Line::from).collect()
+    (lines.into_iter().map(Line::from).collect(), cursor_line)
 }
 
 fn push_wrapped_span(

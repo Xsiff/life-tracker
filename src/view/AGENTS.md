@@ -67,6 +67,11 @@ copy.
   above the helper line spans the full inner popup width so the editor reads as
   one contained window. Draft text wraps to the popup's inner width so long
   unbroken input never overflows the window.
+  The note text area scrolls to keep the current cursor line in view when the
+  draft grows taller than the popup. The separator above the helper line spans
+  the full inner popup width so the editor reads as one contained window. Draft
+  text wraps to the popup's inner width so long unbroken input never overflows
+  the window.
 - **`status_bar.rs`** — shared "now" indicator + current focused slot line.
 - **`theme.rs`** — the single source of category colors:
   `fn color(category: Category) -> ratatui::style::Color`. Every screen pulls
