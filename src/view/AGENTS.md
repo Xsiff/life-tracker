@@ -79,6 +79,12 @@ copy.
   always exposes exactly 24 slots (`00`–`23`) even across DST.
 - **Current focus.** The status bar shows the focused slot, e.g.
   `Focus: 02.08.2026 13.00 Work *` or `Focus: 02.08.2026 Day *`.
+- **Header mirroring.** When a matrix cell is focused, its matching hour header
+  and date header also get a lighter blue highlight. The left date column uses
+  the same lighter treatment as the hour header row, so the two axes stay in
+  sync. When the current hour is visible, its matching header labels use a
+  lighter yellow highlight. The cell itself keeps the stronger selection/now
+  treatment.
 - **Note markers.** A cell with an hour-level note is flagged with `*` inside that cell. A day with a day-level note shows a single `*` appended after the weekday abbreviation in the date column (e.g., `02.08.2026 Sat*│`). Hour slots for that day do **not** show `*` unless they individually have hour-level notes.
 - **Legend palette.** The matrix view reserves a dedicated right-side pane for a
   boxed subtable showing every category number and color mapping so the numeric
