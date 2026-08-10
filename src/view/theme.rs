@@ -45,6 +45,20 @@ pub fn header_style() -> Style {
         .add_modifier(Modifier::BOLD)
 }
 
+pub fn selected_header_style() -> Style {
+    Style::default()
+        .bg(Color::Indexed(110))
+        .fg(Color::Black)
+        .add_modifier(Modifier::BOLD)
+}
+
+pub fn now_header_style() -> Style {
+    Style::default()
+        .bg(Color::Indexed(228))
+        .fg(Color::Black)
+        .add_modifier(Modifier::BOLD)
+}
+
 pub fn month_header_style() -> Style {
     Style::default()
         .fg(Color::Indexed(222))

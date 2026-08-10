@@ -80,7 +80,7 @@ fn build_grid_lines(
     let visible_dates = visible_dates(state.cursor.date, visible_date_rows(max_lines));
     let visible_hours = visible_hours(state.cursor.hour.unwrap_or(0), visible_hour_cols(max_width));
     let mut lines = Vec::new();
-    lines.push(build_header_line(&visible_hours));
+    lines.push(build_header_line(&visible_hours, state.cursor.hour, now.hour() as u8));
     lines.push(Line::raw(build_rule_line('─', '┼', visible_hours.len())));
 
     let mut active_month = None;
@@ -107,13 +107,17 @@ fn build_grid_lines(
     lines
 }
 
-fn build_header_line(hours: &[u8]) -> Line<'static> {
+fn build_header_line(hours: &[u8], selected_hour: Option<u8>, now_hour: u8) -> Line<'static> {
     let mut spans = vec![Span::raw(format!("{:<DATE_WIDTH$}│", ""))];
     for hour in hours {
-        spans.push(Span::styled(
-            format!("{hour:>2}.00"),
-            theme::header_style(),
-        ));
+        let style = if selected_hour == Some(*hour) {
+            theme::selected_header_style()
+        } else if *hour == now_hour {
+            theme::now_header_style()
+        } else {
+            theme::header_style()
+        };
+        spans.push(Span::styled(format!("{hour:>2}.00"), style));
         spans.push(Span::raw("│"));
     }
     Line::from(spans)
@@ -135,12 +139,7 @@ fn build_day_line(
     };
     let date_text = Span::styled(
         format!("{:^16}", combined),
-        date_style(
-            date,
-            state.cursor.date,
-            now.date_naive(),
-            state.cursor.hour.is_none(),
-        ),
+        date_style(date, state.cursor.date, now.date_naive()),
     );
     let mut spans = vec![date_text, Span::raw("│")];
 
@@ -262,12 +261,11 @@ fn date_style(
     date: NaiveDate,
     selected: NaiveDate,
     today: NaiveDate,
-    hour_focus: bool,
 ) -> Style {
-    if date == selected && hour_focus {
-        theme::selected(Style::default())
+    if date == selected {
+        theme::selected_header_style()
     } else if date == today {
-        theme::now_cell(Style::default())
+        theme::now_header_style()
     } else {
         theme::header_style()
     }

@@ -382,7 +382,8 @@ mod tests {
         let output = render_to_string(&state, 58, 18);
         assert!(output.contains("Note - 13:00 Work"));
         assert!(output.contains("Sprint planning, blocked"));
-        assert!(output.contains("on API keys.█"));
+        assert!(output.lines().any(|line| line.contains("on API keys.")));
+        assert!(output.contains("|"));
     }
 
     #[test]

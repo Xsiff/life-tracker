@@ -69,6 +69,9 @@ Legend:
 - The focused cell gets the selection highlight.
 - The real current `(date, hour)` cell gets the "now" highlight when it is not
   also the focused cell.
+- The matching hour header and date header also receive a lighter highlight
+  when a cell is focused, and the current hour's headers use a lighter yellow
+  accent when visible.
 - Vertical separators, per-row `─` rules, and stronger month `═` separators are
   part of the intended appearance, not incidental spacing. Month headers are
   followed by `═`, and the final day of a month also transitions directly to
