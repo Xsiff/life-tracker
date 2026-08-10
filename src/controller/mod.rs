@@ -65,6 +65,10 @@ impl Controller {
                 let selected = move_picker_down(&target, selected);
                 self.state.overlay = Some(Overlay::CategoryPicker { target, selected });
             }
+            (Overlay::CategoryPicker { target, selected }, Action::Scroll(delta)) => {
+                let selected = scroll_picker(&target, selected, delta);
+                self.state.overlay = Some(Overlay::CategoryPicker { target, selected });
+            }
             (Overlay::CategoryPicker { target, .. }, Action::Digit(n)) => {
                 if matches!(target, NoteTarget::Hour { .. }) {
                     if let Some(category) = Category::from_digit(n) {
@@ -191,6 +195,11 @@ impl Controller {
                 move_note_cursor_vertical(&draft, &mut cursor, 1);
                 self.state.overlay = Some(Overlay::NoteEditor { target, draft, cursor });
             }
+            (Overlay::NoteEditor { target, draft, cursor }, Action::Scroll(delta)) => {
+                let mut cursor = cursor;
+                scroll_note_cursor_vertical(&draft, &mut cursor, delta);
+                self.state.overlay = Some(Overlay::NoteEditor { target, draft, cursor });
+            }
             (Overlay::NoteEditor { target, draft, .. }, Action::Confirm) => {
                 self.save_note(target, draft)?;
             }
@@ -219,6 +228,9 @@ impl Controller {
             }
             Action::MoveDown => {
                 self.state.cursor.date += chrono::Duration::days(1);
+            }
+            Action::Scroll(delta) => {
+                self.scroll_cursor_days(delta);
             }
             Action::Confirm => {
                 let date = self.state.cursor.date;
@@ -254,6 +266,10 @@ impl Controller {
             move_cursor_hour(self.state.cursor.date, self.state.cursor.hour, delta);
         self.state.cursor.date = date;
         self.state.cursor.hour = hour;
+    }
+
+    fn scroll_cursor_days(&mut self, delta: i32) {
+        self.state.cursor.date += chrono::Duration::days(delta as i64);
     }
 
     fn open_note_editor(&mut self, target: NoteTarget) {
@@ -470,6 +486,21 @@ fn move_picker_by(
     picker_selection_at(target, next)
 }
 
+fn scroll_picker(
+    target: &NoteTarget,
+    mut selected: CategoryPickerSelection,
+    delta: i32,
+) -> CategoryPickerSelection {
+    for _ in 0..delta.unsigned_abs() {
+        selected = if delta < 0 {
+            move_picker_up(target, selected)
+        } else {
+            move_picker_down(target, selected)
+        };
+    }
+    selected
+}
+
 fn picker_selection_count(target: &NoteTarget) -> usize {
     match target {
         NoteTarget::Day { .. } => 2,
@@ -678,6 +709,12 @@ fn move_note_cursor_vertical(draft: &str, cursor: &mut usize, delta: i8) {
     };
 
     *cursor = char_to_byte_index(&chars, target_char_idx);
+}
+
+fn scroll_note_cursor_vertical(draft: &str, cursor: &mut usize, delta: i32) {
+    for _ in 0..delta.unsigned_abs() {
+        move_note_cursor_vertical(draft, cursor, if delta < 0 { -1 } else { 1 });
+    }
 }
 
 fn byte_to_char_index(draft: &str, byte_idx: usize) -> usize {
