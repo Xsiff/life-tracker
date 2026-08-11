@@ -7,9 +7,7 @@ enough.
 
 ## Demo
 
-![life-tracker demo](docs/assets/demo.gif)
-
-Higher-quality recording: [demo.mp4](demo.mp4)
+![life-tracker demo](docs/assets/life-tracker-demo.gif)
 
 The demo shows the main flow of the app:
 
