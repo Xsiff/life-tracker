@@ -8,7 +8,8 @@ module.
 
 Backend: SQLite via `rusqlite` (with the `bundled` feature — no system SQLite
 required). Single DB file `life-tracker.db` in the `directories::ProjectDirs`
-data dir. `directories` and `rusqlite` are used here and nowhere else.
+data dir, currently resolved from `ProjectDirs::from("dev", "xsiff",
+"life-tracker")`. `directories` and `rusqlite` are used here and nowhere else.
 
 ## Public interface
 

@@ -18,7 +18,7 @@ pub struct Store {
 
 impl Store {
     pub fn open() -> anyhow::Result<Self> {
-        let project_dirs = ProjectDirs::from("dev", "openai", "life-tracker")
+        let project_dirs = ProjectDirs::from("dev", "xsiff", "life-tracker")
             .context("failed to resolve data dir")?;
         std::fs::create_dir_all(project_dirs.data_dir()).context("failed to create data dir")?;
         let path = project_dirs.data_dir().join("life-tracker.db");
