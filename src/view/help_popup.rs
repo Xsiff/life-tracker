@@ -36,10 +36,7 @@ pub fn render(frame: &mut Frame, area: Rect) {
     }
 
     lines.push(Line::raw(""));
-    lines.push(Line::from(Span::styled(
-        "Esc cancel   Enter close",
-        theme::header_style(),
-    )));
+    lines.push(Line::from(Span::styled("Esc cancel   Enter close", theme::header_style())));
 
     frame.render_widget(Paragraph::new(lines), inner);
 }

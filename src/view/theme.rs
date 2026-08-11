@@ -26,41 +26,25 @@ pub fn empty_style() -> Style {
 }
 
 pub fn selected(style: Style) -> Style {
-    style
-        .bg(Color::Indexed(25))
-        .fg(Color::White)
-        .add_modifier(Modifier::BOLD)
+    style.bg(Color::Indexed(25)).fg(Color::White).add_modifier(Modifier::BOLD)
 }
 
 pub fn now_cell(style: Style) -> Style {
-    style
-        .bg(Color::Indexed(58))
-        .fg(Color::Indexed(230))
-        .add_modifier(Modifier::BOLD)
+    style.bg(Color::Indexed(58)).fg(Color::Indexed(230)).add_modifier(Modifier::BOLD)
 }
 
 pub fn header_style() -> Style {
-    Style::default()
-        .fg(Color::Indexed(153))
-        .add_modifier(Modifier::BOLD)
+    Style::default().fg(Color::Indexed(153)).add_modifier(Modifier::BOLD)
 }
 
 pub fn selected_header_style() -> Style {
-    Style::default()
-        .bg(Color::Indexed(110))
-        .fg(Color::Black)
-        .add_modifier(Modifier::BOLD)
+    Style::default().bg(Color::Indexed(110)).fg(Color::Black).add_modifier(Modifier::BOLD)
 }
 
 pub fn now_header_style() -> Style {
-    Style::default()
-        .bg(Color::Indexed(228))
-        .fg(Color::Black)
-        .add_modifier(Modifier::BOLD)
+    Style::default().bg(Color::Indexed(228)).fg(Color::Black).add_modifier(Modifier::BOLD)
 }
 
 pub fn month_header_style() -> Style {
-    Style::default()
-        .fg(Color::Indexed(222))
-        .add_modifier(Modifier::BOLD)
+    Style::default().fg(Color::Indexed(222)).add_modifier(Modifier::BOLD)
 }

@@ -9,11 +9,11 @@ use std::io;
 use anyhow::Context;
 use controller::Controller;
 use crossterm::{
-    execute,
     event::{
         DisableMouseCapture, EnableMouseCapture, KeyboardEnhancementFlags,
         PopKeyboardEnhancementFlags, PushKeyboardEnhancementFlags,
     },
+    execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use ratatui::{backend::CrosstermBackend, Terminal};

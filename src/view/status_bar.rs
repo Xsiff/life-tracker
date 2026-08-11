@@ -1,10 +1,5 @@
 use chrono::{DateTime, Local, Timelike};
-use ratatui::{
-    layout::Rect,
-    text::Line,
-    widgets::Paragraph,
-    Frame,
-};
+use ratatui::{layout::Rect, text::Line, widgets::Paragraph, Frame};
 
 use crate::controller::{NoteTarget, Overlay, State};
 
@@ -42,29 +37,17 @@ pub fn render(frame: &mut Frame, area: Rect, state: &State, now: &DateTime<Local
 }
 
 fn focus_text(state: &State) -> String {
-    let date_display = format!(
-        "{} {}",
-        state.cursor.date.format("%d.%m.%Y"),
-        state.cursor.date.format("%a")
-    );
+    let date_display =
+        format!("{} {}", state.cursor.date.format("%d.%m.%Y"), state.cursor.date.format("%a"));
     match state.cursor.hour {
         Some(hour) => match state.activity(state.cursor.date, hour) {
             Some(activity) => {
                 let note = if activity.has_note() { " *" } else { "" };
-                let label = activity
-                    .category()
-                    .map(|category| category.label())
-                    .unwrap_or("No activity");
-                format!(
-                    "Focus: {} {hour:02}.00 {}{note}",
-                    date_display,
-                    label
-                )
+                let label =
+                    activity.category().map(|category| category.label()).unwrap_or("No activity");
+                format!("Focus: {} {hour:02}.00 {}{note}", date_display, label)
             }
-            None => format!(
-                "Focus: {} {hour:02}.00 Empty",
-                date_display
-            ),
+            None => format!("Focus: {} {hour:02}.00 Empty", date_display),
         },
         None => {
             let note = if state.day(state.cursor.date).and_then(|day| day.note()).is_some() {

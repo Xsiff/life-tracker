@@ -13,11 +13,14 @@ use crate::{
 
 use super::theme;
 
-pub fn render(frame: &mut Frame, area: Rect, target: &NoteTarget, selected: CategoryPickerSelection) {
+pub fn render(
+    frame: &mut Frame,
+    area: Rect,
+    target: &NoteTarget,
+    selected: CategoryPickerSelection,
+) {
     frame.render_widget(Clear, area);
-    let block = Block::default()
-        .title(title(target))
-        .borders(Borders::ALL);
+    let block = Block::default().title(title(target)).borders(Borders::ALL);
     let inner = block.inner(area);
     frame.render_widget(block, area);
 

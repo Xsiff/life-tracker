@@ -4,11 +4,8 @@ use std::{
     sync::{Mutex, OnceLock},
 };
 
-use crossterm::{
-    event::{
-        poll, read, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseEvent,
-        MouseEventKind,
-    },
+use crossterm::event::{
+    poll, read, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseEvent, MouseEventKind,
 };
 
 use crate::domain::Action;
@@ -20,11 +17,7 @@ static TEST_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
 const MAX_SCROLL_CHUNK: i32 = 4;
 
 pub fn next_action(timeout: Duration) -> anyhow::Result<Option<Action>> {
-    let wait = if has_pending_input() {
-        Duration::ZERO
-    } else {
-        timeout
-    };
+    let wait = if has_pending_input() { Duration::ZERO } else { timeout };
 
     if poll(wait)? {
         queue_event(read()?);
@@ -36,18 +29,10 @@ pub fn next_action(timeout: Duration) -> anyhow::Result<Option<Action>> {
 
 fn action_for_key(key: KeyEvent) -> Option<Action> {
     match key.code {
-        KeyCode::Left if key.modifiers.contains(KeyModifiers::ALT) => {
-            Some(Action::MoveWordLeft)
-        }
-        KeyCode::Right if key.modifiers.contains(KeyModifiers::ALT) => {
-            Some(Action::MoveWordRight)
-        }
-        KeyCode::Delete if key.modifiers.contains(KeyModifiers::ALT) => {
-            Some(Action::DeleteWord)
-        }
-        KeyCode::Backspace if key.modifiers.contains(KeyModifiers::ALT) => {
-            Some(Action::DeleteWord)
-        }
+        KeyCode::Left if key.modifiers.contains(KeyModifiers::ALT) => Some(Action::MoveWordLeft),
+        KeyCode::Right if key.modifiers.contains(KeyModifiers::ALT) => Some(Action::MoveWordRight),
+        KeyCode::Delete if key.modifiers.contains(KeyModifiers::ALT) => Some(Action::DeleteWord),
+        KeyCode::Backspace if key.modifiers.contains(KeyModifiers::ALT) => Some(Action::DeleteWord),
         KeyCode::Left => Some(Action::MoveLeft),
         KeyCode::Right => Some(Action::MoveRight),
         KeyCode::Up => Some(Action::MoveUp),

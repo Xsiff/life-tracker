@@ -1,5 +1,6 @@
 use chrono::NaiveDate;
 
+use super::note::normalize_note;
 use super::Activity;
 
 pub const HOURS_PER_DAY: usize = 24;
@@ -13,11 +14,7 @@ pub struct Day {
 
 impl Day {
     pub fn new(date: NaiveDate) -> Self {
-        Self {
-            date,
-            hours: std::array::from_fn(|_| None),
-            note: None,
-        }
+        Self { date, hours: std::array::from_fn(|_| None), note: None }
     }
 
     pub fn note(&self) -> Option<&str> {
@@ -52,17 +49,6 @@ impl Day {
 
     pub fn is_empty(&self) -> bool {
         self.note.is_none() && self.hours.iter().all(Option::is_none)
-    }
-}
-
-fn normalize_note(note: String) -> Option<String> {
-    let trimmed = note.trim();
-    if trimmed.is_empty() {
-        None
-    } else if trimmed.len() == note.len() {
-        Some(note)
-    } else {
-        Some(trimmed.to_owned())
     }
 }
 

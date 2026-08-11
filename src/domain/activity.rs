@@ -1,3 +1,4 @@
+use super::note::normalize_note;
 use super::Category;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -8,24 +9,15 @@ pub struct Activity {
 
 impl Activity {
     pub fn new(category: Category) -> Self {
-        Self {
-            category: Some(category),
-            note: None,
-        }
+        Self { category: Some(category), note: None }
     }
 
     pub fn with_note(category: Category, note: impl Into<String>) -> Self {
-        Self {
-            category: Some(category),
-            note: normalize_note(note.into()),
-        }
+        Self { category: Some(category), note: normalize_note(note.into()) }
     }
 
     pub fn note_only(note: impl Into<String>) -> Self {
-        Self {
-            category: None,
-            note: normalize_note(note.into()),
-        }
+        Self { category: None, note: normalize_note(note.into()) }
     }
 
     pub const fn category(&self) -> Option<Category> {
@@ -62,17 +54,6 @@ impl Activity {
 
     pub fn is_empty(&self) -> bool {
         self.category.is_none() && self.note.is_none()
-    }
-}
-
-fn normalize_note(note: String) -> Option<String> {
-    let trimmed = note.trim();
-    if trimmed.is_empty() {
-        None
-    } else if trimmed.len() == note.len() {
-        Some(note)
-    } else {
-        Some(trimmed.to_owned())
     }
 }
 

@@ -26,16 +26,9 @@ pub enum CategoryPickerSelection {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Overlay {
-    CategoryPicker {
-        target: NoteTarget,
-        selected: CategoryPickerSelection,
-    },
+    CategoryPicker { target: NoteTarget, selected: CategoryPickerSelection },
     Help,
-    NoteEditor {
-        target: NoteTarget,
-        draft: String,
-        cursor: usize,
-    },
+    NoteEditor { target: NoteTarget, draft: String, cursor: usize },
 }
 
 #[derive(Debug, Clone)]
@@ -50,10 +43,7 @@ pub struct State {
 impl State {
     pub fn new(today: NaiveDate, days: BTreeMap<NaiveDate, Day>) -> Self {
         Self {
-            cursor: Cursor {
-                date: today,
-                hour: Some(Local::now().hour() as u8),
-            },
+            cursor: Cursor { date: today, hour: Some(Local::now().hour() as u8) },
             overlay: None,
             days,
             last_error: None,

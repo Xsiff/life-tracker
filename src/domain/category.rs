@@ -122,13 +122,7 @@ mod tests {
 
     #[test]
     fn category_parses_flexible_names() {
-        assert_eq!(
-            "Friends/Family".parse::<Category>().ok(),
-            Some(Category::FriendsFamily)
-        );
-        assert_eq!(
-            "hobbies_skills".parse::<Category>().ok(),
-            Some(Category::HobbiesSkills)
-        );
+        assert_eq!("Friends/Family".parse::<Category>().ok(), Some(Category::FriendsFamily));
+        assert_eq!("hobbies_skills".parse::<Category>().ok(), Some(Category::HobbiesSkills));
     }
 }

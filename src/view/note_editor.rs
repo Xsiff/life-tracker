@@ -16,37 +16,21 @@ pub fn render(
     cursor: usize,
 ) {
     frame.render_widget(Clear, area);
-    let block = Block::default()
-        .title(title(state, target))
-        .borders(Borders::ALL);
+    let block = Block::default().title(title(state, target)).borders(Borders::ALL);
     let inner = block.inner(area);
     frame.render_widget(block, area);
 
     let footer_height = 2u16.min(inner.height);
     let text_height = inner.height.saturating_sub(footer_height);
-    let text_area = Rect {
-        x: inner.x,
-        y: inner.y,
-        width: inner.width,
-        height: text_height,
-    };
-    let footer_area = Rect {
-        x: inner.x,
-        y: inner.y + text_height,
-        width: inner.width,
-        height: footer_height,
-    };
+    let text_area = Rect { x: inner.x, y: inner.y, width: inner.width, height: text_height };
+    let footer_area =
+        Rect { x: inner.x, y: inner.y + text_height, width: inner.width, height: footer_height };
 
     let (lines, cursor_line) = draft_lines_with_cursor(draft, cursor, inner.width as usize);
     if text_area.height > 0 {
         let max_scroll = lines.len().saturating_sub(text_area.height as usize);
-        let scroll = cursor_line
-            .saturating_sub(text_area.height as usize / 2)
-            .min(max_scroll);
-        frame.render_widget(
-            Paragraph::new(lines).scroll((scroll as u16, 0)),
-            text_area,
-        );
+        let scroll = cursor_line.saturating_sub(text_area.height as usize / 2).min(max_scroll);
+        frame.render_widget(Paragraph::new(lines).scroll((scroll as u16, 0)), text_area);
     }
 
     if footer_area.height > 0 {
@@ -75,7 +59,11 @@ fn title(state: &State, target: &NoteTarget) -> String {
     }
 }
 
-fn draft_lines_with_cursor(draft: &str, cursor: usize, width: usize) -> (Vec<Line<'static>>, usize) {
+fn draft_lines_with_cursor(
+    draft: &str,
+    cursor: usize,
+    width: usize,
+) -> (Vec<Line<'static>>, usize) {
     if width == 0 {
         return (vec![], 0);
     }
