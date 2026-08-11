@@ -7,7 +7,7 @@ enough.
 
 ## Demo
 
-![life-tracker demo](demo.gif)
+![life-tracker demo](docs/assets/demo.gif)
 
 Higher-quality recording: [demo.mp4](demo.mp4)
 
