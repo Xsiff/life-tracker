@@ -41,19 +41,54 @@ The fixed category palette is:
 
 ## Installation
 
-Requires a Rust toolchain. SQLite is bundled through `rusqlite`, so no system
-SQLite install is needed.
+Private releases are distributed through GitHub Releases only. There is no
+Homebrew tap, Cargo publish, or other public registry release.
+
+### Install From A GitHub Release
+
+The install script downloads a release archive, extracts the binary, and places
+`life-tracker` into `~/.local/bin` by default.
+
+```bash
+git clone git@xsiff:Xsiff/life-tracker.git
+cd life-tracker
+GH_TOKEN=your_github_token ./scripts/install_release.sh
+```
+
+For private repositories, the installer requires either `GH_TOKEN` or
+`GITHUB_TOKEN`. If `gh` is installed and already authenticated, that is also
+accepted.
+
+### Manual Install
+
+1. Download the matching release archive from GitHub Releases.
+2. Extract it.
+3. Move `life-tracker` into a directory on your `PATH`, for example
+   `~/.local/bin`.
+
+```bash
+tar -xzf life-tracker-v0.1.0-aarch64-apple-darwin.tar.gz
+mkdir -p ~/.local/bin
+mv life-tracker ~/.local/bin/life-tracker
+```
+
+### Build From Source
+
+SQLite is bundled through `rusqlite`, so no system SQLite install is needed.
 
 ```bash
 git clone git@xsiff:Xsiff/life-tracker.git
 cd life-tracker
 cargo build --release
+cp target/release/life-tracker ~/.local/bin/life-tracker
 ```
 
 ## Running
 
+After installation, launch the app from any terminal with:
+
 ```bash
-cargo run --release
+life-tracker
 ```
 
 ## Keybindings
@@ -103,6 +138,10 @@ resolved via `directories`.
 - Day notes are stored separately from hour entries.
 - Writes happen immediately through the controller's persist-then-commit flow.
 
+On macOS, the database is created under the user data directory returned by
+`directories::ProjectDirs`, typically inside
+`~/Library/Application Support/life-tracker/`.
+
 ## Development
 
 The repository includes some Python-based tooling through `uv`, while the app
@@ -124,6 +163,19 @@ cargo clippy
 ```
 
 For the detailed architecture and module contracts, see [AGENTS.md](AGENTS.md).
+
+## Releasing
+
+Versioned releases are published privately on GitHub Releases.
+
+1. Update `version` in `Cargo.toml`.
+2. Commit the version bump.
+3. Create and push a tag such as `v0.1.0`.
+4. GitHub Actions builds the release archives and attaches them to that GitHub
+   Release.
+
+The release workflow does not publish to Cargo, Homebrew, or any public package
+registry.
 
 ## Merge Bot
 

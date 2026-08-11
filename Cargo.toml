@@ -2,6 +2,10 @@
 name = "life-tracker"
 version = "0.1.0"
 edition = "2021"
+description = "Terminal life tracker built with ratatui and crossterm"
+license = "MIT"
+repository = "https://github.com/Xsiff/life-tracker"
+readme = "README.md"
 
 [dependencies]
 anyhow = "1"
