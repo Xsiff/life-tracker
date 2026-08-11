@@ -1,6 +1,6 @@
 mod base;
 mod note_buffer;
-mod overlay;
+mod overlays;
 mod persistence;
 mod picker;
 mod state;

@@ -7,7 +7,11 @@ use crate::domain::{Activity, Day};
 use super::{Controller, NoteTarget, State};
 
 impl Controller {
-    pub(super) fn save_note(&mut self, target: NoteTarget, draft: String) -> anyhow::Result<()> {
+    pub(in crate::controller) fn save_note(
+        &mut self,
+        target: NoteTarget,
+        draft: String,
+    ) -> anyhow::Result<()> {
         match target {
             NoteTarget::Day { date } => {
                 if draft.trim().is_empty() {
@@ -44,7 +48,12 @@ impl Controller {
         Ok(())
     }
 
-    pub(super) fn write_hour_state(&mut self, date: NaiveDate, hour: u8, activity: Activity) {
+    pub(in crate::controller) fn write_hour_state(
+        &mut self,
+        date: NaiveDate,
+        hour: u8,
+        activity: Activity,
+    ) {
         ensure_day(&mut self.state.days, date).set_hour(hour, activity);
     }
 
@@ -57,7 +66,7 @@ impl Controller {
         Ok(())
     }
 
-    pub(super) fn clear_hour_if_present(
+    pub(in crate::controller) fn clear_hour_if_present(
         &mut self,
         date: NaiveDate,
         hour: u8,
@@ -116,7 +125,7 @@ impl Controller {
         self.clear_day_note(date)
     }
 
-    pub(super) fn delete_note(&mut self, target: NoteTarget) -> anyhow::Result<()> {
+    pub(in crate::controller) fn delete_note(&mut self, target: NoteTarget) -> anyhow::Result<()> {
         match target {
             NoteTarget::Day { date } => self.clear_day_note_if_present(date)?,
             NoteTarget::Hour { date, hour } => self.clear_hour_note(date, hour)?,
@@ -127,7 +136,7 @@ impl Controller {
     }
 }
 
-pub(super) fn note_draft(state: &State, target: &NoteTarget) -> String {
+pub(in crate::controller) fn note_draft(state: &State, target: &NoteTarget) -> String {
     match *target {
         NoteTarget::Day { date } => state.day(date).and_then(Day::note).unwrap_or("").to_string(),
         NoteTarget::Hour { date, hour } => state
